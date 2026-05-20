@@ -48,6 +48,55 @@ class Helper {
     }
   }
 
+  static String formatTimeOnly(String dateString) {
+    try {
+      final DateTime dateTime = DateTime.parse(dateString).toLocal();
+
+      // Example: 02:30 PM
+      return DateFormat('hh:mm a').format(dateTime);
+    } catch (e) {
+      return "NA";
+    }
+  }
+
+  static String formatDate(String dateString) {
+    final List<String> formats = [
+      'dd MMM yyyy',
+      'yyyy-MM-dd',
+      'yyyy-MM-dd hh:mm',
+      'dd MMMM yyyy',
+      'dd/MM/yyyy',
+      'yyyy-MM-ddTHH:mm:ss.SSSZ',
+      'yyyy-MM-ddTHH:mm:ss.SSSZ',
+    ];
+
+    for (String format in formats) {
+      try {
+        final DateFormat dateFormat = DateFormat(format);
+
+        DateTime dateTime;
+
+        if (format == 'yyyy-MM-ddTHH:mm:ss.SSSZ' ||
+            format == 'yyyy-MM-ddTHH:mm:ss.SSSZ') {
+          dateTime = DateTime.parse(dateString);
+        } else {
+          dateTime = dateFormat.parseStrict(dateString);
+        }
+
+        dateTime = dateTime.toLocal();
+
+        // Only Date
+        final DateFormat outputFormatter = DateFormat('d MMMM yyyy');
+
+        return outputFormatter.format(dateTime);
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return "NA";
+  }
+
   static String? getTextOrNull(TextEditingController controller) {
     final text = controller.text.trim();
 

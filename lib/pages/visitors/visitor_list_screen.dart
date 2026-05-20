@@ -316,7 +316,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
                                     /// Date
                                     Text(
-                                      Helper.formatDateOnly(
+                                      Helper.formatDate(
                                         attendee.checkInTime != null
                                             ? attendee.checkInTime
                                                       ?.toIso8601String() ??
@@ -382,9 +382,9 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                               Column(
                                 children: [
                                   Text(
-                                    Helper.formatDateOnly(
-                                      attendee.checkOutTime != null
-                                          ? attendee.checkOutTime
+                                    Helper.formatTimeOnly(
+                                      attendee.checkInTime != null
+                                          ? attendee.checkInTime
                                                     ?.toIso8601String() ??
                                                 ""
                                           : "NA",
@@ -408,11 +408,14 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                               Column(
                                 children: [
                                   Text(
-                                    attendee.checkOutTime != null
-                                        ? DateFormat(
-                                            "hh:mm:ss a",
-                                          ).format(attendee.checkOutTime!)
-                                        : "NA",
+                                    Helper.formatTimeOnly(
+                                      attendee.checkOutTime != null
+                                          ? attendee.checkOutTime
+                                                    ?.toIso8601String() ??
+                                                ""
+                                          : "NA",
+                                    ),
+
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
