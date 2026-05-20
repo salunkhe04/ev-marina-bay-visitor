@@ -98,6 +98,38 @@ class ApiService {
     }
   }
 
+  Future<List<MarinaBayVisitor>> getMarinaBayVisitor() async {
+    try {
+      final Response response = await _dio.get('/marina-bay-visitors');
+      if (response.data['code'] != 200) {
+        //Helper.showCustomSnackBar(response.data['message']);
+        return [];
+      }
+      print(response);
+      final List<dynamic> dataList = response.data["data"];
+      final List<MarinaBayVisitor> designations = dataList.map((data) {
+        return MarinaBayVisitor.fromJson(data as Map<String, dynamic>);
+      }).toList();
+      return designations;
+    } on DioException catch (e) {
+      String errorMessage = 'Something went wrong';
+
+      if (e.response != null) {
+        // Backend response error message
+        errorMessage = e.response?.data['message'] ?? errorMessage;
+      } else {
+        // Other types of errors (network, etc.)
+        errorMessage = e.message?.toString() ?? errorMessage;
+      }
+      // Prevent literal 'null' from showing
+      if (errorMessage.trim().toLowerCase() == 'null') {
+        errorMessage = 'Something went wrong';
+      }
+      //Helper.showCustomSnackBar(errorMessage);
+      return [];
+    }
+  }
+
   Future<MarinaBayVisitor?> addMarinaBayVisitor(
     Map<String, dynamic> data,
   ) async {

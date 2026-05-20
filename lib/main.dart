@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:marina_bay_cell_building_visitors/pages/visitors/video_splash_screen.dart';
 import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart';
 import 'package:provider/provider.dart';
 import 'navigation_wrapper.dart';
@@ -72,7 +73,7 @@ class MarinaBayVisitorApp extends StatelessWidget {
           labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
         ),
       ),
-      home: const NavigationWrapper(),
+      home: const SplashScreen(),
     );
   }
 }

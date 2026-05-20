@@ -1,8 +1,8 @@
 import 'dart:async';
 
-// import 'package:ev_homes/core/helper/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_update/in_app_update.dart';
+import 'package:marina_bay_cell_building_visitors/core/helper/helper.dart';
 
 class AppUpdatePlayStore extends StatefulWidget {
   const AppUpdatePlayStore({super.key});
@@ -27,13 +27,13 @@ class _AppUpdatePlayStoreState extends State<AppUpdatePlayStore> {
           });
           if (info.updateAvailability == UpdateAvailability.updateAvailable) {
             InAppUpdate.performImmediateUpdate().catchError((e) {
-              // Helper.showCustomSnackBar(e.toString());
+              Helper.showCustomSnackBar(e.toString());
               return AppUpdateResult.inAppUpdateFailed;
             });
           }
         })
         .catchError((e) {
-          // Helper.showCustomSnackBar(e.toString());
+          Helper.showCustomSnackBar(e.toString());
         });
   }
 
@@ -65,7 +65,7 @@ class _AppUpdatePlayStoreState extends State<AppUpdatePlayStore> {
                         UpdateAvailability.updateAvailable
                     ? () {
                         InAppUpdate.performImmediateUpdate().catchError((e) {
-                          // Helper.showCustomSnackBar(e.toString());
+                          Helper.showCustomSnackBar(e.toString());
                           return AppUpdateResult.inAppUpdateFailed;
                         });
                       }
@@ -84,7 +84,7 @@ class _AppUpdatePlayStoreState extends State<AppUpdatePlayStore> {
                               });
                             })
                             .catchError((e) {
-                              // Helper.showCustomSnackBar(e.toString());
+                              Helper.showCustomSnackBar(e.toString());
                             });
                       }
                     : null,
@@ -96,10 +96,10 @@ class _AppUpdatePlayStoreState extends State<AppUpdatePlayStore> {
                     : () {
                         InAppUpdate.completeFlexibleUpdate()
                             .then((_) {
-                              // Helper.showCustomSnackBar("Success!");
+                              Helper.showCustomSnackBar("Success!");
                             })
                             .catchError((e) {
-                              // Helper.showCustomSnackBar(e.toString());
+                              Helper.showCustomSnackBar(e.toString());
                             });
                       },
               ),
