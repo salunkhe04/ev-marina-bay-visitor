@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
+import 'package:provider/provider.dart';
 import 'package:simple_month_year_picker/simple_month_year_picker.dart';
+
+import '../../providers/settingProvider.dart';
 
 class VisitorListScreen extends StatelessWidget {
   const VisitorListScreen({super.key});
@@ -21,51 +25,30 @@ class VisitorListScreenMobile extends StatefulWidget {
 
 class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
   String searchQuery = '';
+  bool isLoading = false;
+
   DateTime selectedDate = DateTime.now();
 
-  /// Dummy Data
-  final List<Map<String, dynamic>> dummyAttendance = [
-    {
-      "date": "20 May 2026",
-      "checkInTime": "11:46:30",
-      "checkOutTime": "NA",
-      "checkInAddress": "JN2-57/B, Navi Mumbai",
-      "checkOutAddress": "NA",
-      "status": "present",
-      "checkInPhoto": "https://i.pravatar.cc/300?img=12",
-      "checkOutPhoto": "",
-    },
-    {
-      "date": "19 May 2026",
-      "checkInTime": "NA",
-      "checkOutTime": "NA",
-      "checkInAddress": "NA",
-      "checkOutAddress": "NA",
-      "status": "absent",
-      "checkInPhoto": "",
-      "checkOutPhoto": "",
-    },
-    {
-      "date": "18 May 2026",
-      "checkInTime": "11:23:56",
-      "checkOutTime": "15:33:15",
-      "checkInAddress": "JN/3-38, Navi Mumbai",
-      "checkOutAddress": "JN2-57/B, Navi Mumbai",
-      "status": "present",
-      "checkInPhoto": "https://i.pravatar.cc/300?img=15",
-      "checkOutPhoto": "https://i.pravatar.cc/300?img=16",
-    },
-    {
-      "date": "17 May 2026",
-      "checkInTime": "NA",
-      "checkOutTime": "NA",
-      "checkInAddress": "NA",
-      "checkOutAddress": "NA",
-      "status": "absent",
-      "checkInPhoto": "",
-      "checkOutPhoto": "",
-    },
-  ];
+  Future<void> onRefresh() async {
+    try {
+      final settingProvider = Provider.of<SettingProvider>(
+        context,
+        listen: false,
+      );
+
+      setState(() {
+        isLoading = true;
+      });
+
+      await settingProvider.getMarinaBayVisitor();
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final picked = await SimpleMonthYearPicker.showMonthYearPickerDialog(
@@ -97,13 +80,27 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final filteredAttendance = dummyAttendance.where((employee) {
-      final status = employee["status"].toString().toLowerCase();
-      final search = searchQuery.toLowerCase();
+  void initState() {
+    super.initState();
 
-      return status.contains(search);
-    }).toList();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      onRefresh();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingProvider = Provider.of<SettingProvider>(context);
+
+    final List<MarinaBayVisitor> filteredAttendance = settingProvider.visitors
+        .where((visitor) {
+          final name = visitor.name?.toLowerCase() ?? '';
+          final purpose = visitor.purpose?.toLowerCase() ?? '';
+          final search = searchQuery.toLowerCase();
+
+          return name.contains(search) || purpose.contains(search);
+        })
+        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F5F7),
@@ -114,7 +111,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
         centerTitle: true,
         iconTheme: const IconThemeData(color: Color(0xFF1565C0)),
         title: const Text(
-          'Attendance List',
+          'Visitor List',
           style: TextStyle(
             color: Color(0xFF1565C0),
             fontWeight: FontWeight.w700,
@@ -123,249 +120,297 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
         ),
       ),
 
-      body: Column(
-        children: [
-          const SizedBox(height: 18),
+      body: RefreshIndicator(
+        onRefresh: onRefresh,
 
-          /// Date Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => _selectDate(context),
-                  child: const Icon(
-                    Icons.calendar_today,
-                    color: Colors.grey,
-                    size: 28,
-                  ),
-                ),
+        child: Column(
+          children: [
+            const SizedBox(height: 18),
 
-                const SizedBox(width: 12),
-
-                GestureDetector(
-                  onTap: () => _selectDate(context),
-                  child: Text(
-                    DateFormat("MMMM yyyy").format(selectedDate),
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w500,
+            /// Date Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => _selectDate(context),
+                    child: const Icon(
+                      Icons.calendar_today,
+                      color: Colors.grey,
+                      size: 28,
                     ),
                   ),
-                ),
 
-                const Spacer(),
+                  const SizedBox(width: 12),
 
-                const Icon(Icons.history, color: Colors.grey, size: 32),
-              ],
+                  GestureDetector(
+                    onTap: () => _selectDate(context),
+                    child: Text(
+                      DateFormat("MMMM yyyy").format(selectedDate),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  GestureDetector(
+                    onTap: onRefresh,
+                    child: const Icon(
+                      Icons.refresh,
+                      color: Colors.grey,
+                      size: 32,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 14),
+            const SizedBox(height: 14),
 
-          /// Search
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: SizedBox(
-              height: 48,
-              child: TextField(
-                onChanged: (query) {
-                  setState(() {
-                    searchQuery = query;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Search Status',
-                  hintStyle: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 14,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: EdgeInsets.zero,
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: Color(0xFF1565C0),
-                    size: 24,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
+            /// Search
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: SizedBox(
+                height: 48,
+                child: TextField(
+                  onChanged: (query) {
+                    setState(() {
+                      searchQuery = query;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search Visitor',
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 14,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.zero,
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Color(0xFF1565C0),
+                      size: 24,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-          /// Empty State
-          if (filteredAttendance.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.assignment_ind_outlined,
-                        size: 48,
-                        color: Colors.blueGrey.shade300,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    const Text(
-                      'No Active Visitors',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    const Text(
-                      'New check-ins will display here',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          /// List
-          else
-            Expanded(
-              child: ListView.builder(
-                itemCount: filteredAttendance.length,
-                itemBuilder: (context, index) {
-                  final attendee = filteredAttendance[index];
-
-                  return Container(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+            /// Loading
+            if (isLoading)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            /// Empty State
+            else if (filteredAttendance.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
                         ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          /// LEFT
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Icon(
+                          Icons.assignment_ind_outlined,
+                          size: 48,
+                          color: Colors.blueGrey.shade300,
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      const Text(
+                        'No Active Visitors',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      const Text(
+                        'New check-ins will display here',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            /// List
+            else
+              Expanded(
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: filteredAttendance.length,
+                  itemBuilder: (context, index) {
+                    final MarinaBayVisitor attendee = filteredAttendance[index];
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            /// LEFT
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  /// Visitor Name
+                                  Text(
+                                    attendee.name ?? "Unknown Visitor",
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF1565C0),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 4),
+
+                                  /// Date
+                                  Text(
+                                    attendee.checkInTime != null
+                                        ? DateFormat(
+                                            "dd MMM yyyy",
+                                          ).format(attendee.checkInTime!)
+                                        : "No Date",
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 10),
+
+                                  infoTile(
+                                    "Purpose",
+                                    attendee.purpose ?? "No Purpose",
+                                  ),
+
+                                  const SizedBox(height: 8),
+
+                                  infoTile(
+                                    "Unit No",
+                                    attendee.unitNo ?? "No Unit",
+                                  ),
+
+                                  const SizedBox(height: 10),
+
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: attendee.checkOutTime == null
+                                          ? Colors.green.shade50
+                                          : Colors.blue.shade50,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      attendee.checkOutTime == null
+                                          ? "CHECKED IN"
+                                          : "CHECKED OUT",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: attendee.checkOutTime == null
+                                            ? Colors.green
+                                            : Colors.blue,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(width: 10),
+
+                            /// CHECK IN
+                            Column(
                               children: [
                                 Text(
-                                  attendee["date"],
+                                  attendee.checkInTime != null
+                                      ? DateFormat(
+                                          "hh:mm:ss a",
+                                        ).format(attendee.checkInTime!)
+                                      : "NA",
                                   style: const TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
 
-                                const SizedBox(height: 10),
+                                const SizedBox(height: 8),
 
-                                infoTile("Time In", attendee["checkInAddress"]),
+                                photoWidget(attendee.checkInPhoto ?? ""),
+                              ],
+                            ),
+
+                            const SizedBox(width: 10),
+
+                            /// CHECK OUT
+                            Column(
+                              children: [
+                                Text(
+                                  attendee.checkOutTime != null
+                                      ? DateFormat(
+                                          "hh:mm:ss a",
+                                        ).format(attendee.checkOutTime!)
+                                      : "NA",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
 
                                 const SizedBox(height: 8),
 
-                                infoTile(
-                                  "Time Out",
-                                  attendee["checkOutAddress"],
-                                ),
-
-                                const SizedBox(height: 10),
-
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: attendee["status"] == "absent"
-                                        ? Colors.red.shade50
-                                        : Colors.green.shade50,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    attendee["status"].toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: attendee["status"] == "absent"
-                                          ? Colors.red
-                                          : Colors.green,
-                                    ),
-                                  ),
-                                ),
+                                photoWidget(attendee.checkOutPhoto ?? ""),
                               ],
                             ),
-                          ),
-
-                          const SizedBox(width: 10),
-
-                          /// CHECK IN
-                          Column(
-                            children: [
-                              Text(
-                                attendee["checkInTime"],
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-
-                              const SizedBox(height: 8),
-
-                              photoWidget(attendee["checkInPhoto"]),
-                            ],
-                          ),
-
-                          const SizedBox(width: 10),
-
-                          /// CHECK OUT
-                          Column(
-                            children: [
-                              Text(
-                                attendee["checkOutTime"],
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-
-                              const SizedBox(height: 8),
-
-                              photoWidget(attendee["checkOutPhoto"]),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

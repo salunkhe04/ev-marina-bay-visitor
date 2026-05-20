@@ -1,96 +1,128 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
-import '../../../navigation_wrapper.dart';
 
-class VisitorSplashScreen extends StatefulWidget {
-  const VisitorSplashScreen({super.key});
+import 'dart:async';
+
+import 'package:marina_bay_cell_building_visitors/main.dart';
+
+import 'dart:async';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({Key? key}) : super(key: key);
 
   @override
-  State<VisitorSplashScreen> createState() => _VisitorSplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _VisitorSplashScreenState extends State<VisitorSplashScreen> {
-  late VideoPlayerController _videoController;
-  bool _isVideoInitialized = false;
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize your video file stream
-    _videoController = VideoPlayerController.asset("assets/video/home_bg.mp4")
-      ..initialize().then((_) {
-        setState(() {
-          _isVideoInitialized = true;
-        });
-        _videoController.setLooping(false); // Play once
-        _videoController.play();
+    // Setup fade-in animation for a premium feel
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
 
-        // Listen for the exact moment the video ends
-        _videoController.addListener(_videoListener);
-      });
-  }
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
 
-  void _videoListener() {
-    // If the video reaches the final millisecond, transition forward
-    if (_videoController.value.position >= _videoController.value.duration) {
-      _videoController.removeListener(_videoListener);
-      _navigateToHome();
-    }
-  }
+    _animationController.forward();
 
-  void _navigateToHome() {
-    if (mounted) {
-      // Replaces the splash screen on the stack so users can't press "back" into it
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const NavigationWrapper()),
-      );
-    }
+    Timer(const Duration(seconds: 4), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MarinaBayVisitorApp()),
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
-    _videoController.removeListener(_videoListener);
-    _videoController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xFF0F172A,
-      ), // Premium dark background while loading
+      // MODIFICATION 1: Set the Scaffold background color directly to white
+      backgroundColor: Colors.white,
       body: Stack(
-        fit: StackFit.expand,
         children: [
-          _isVideoInitialized
-              ? FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: _videoController.value.size.width,
-                    height: _videoController.value.size.height,
-                    child: VideoPlayer(_videoController),
+          // Animated Content Layer
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: SafeArea(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(height: 40), // Top spacing
+                  // Center Branding Block
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'assets/logo.png', // Main 10 Marina Bay Logo
+                        height: 180,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: 30),
+                      Text(
+                        'RESIDENT PORTAL',
+                        style: TextStyle(
+                          // Gold text still looks stunning and sharp against pure white
+                          color: const Color(0xFFD4AF37),
+                          fontSize: 22,
+                          fontWeight: FontWeight
+                              .w500, // Slightly bumped weight for white background crispness
+                          letterSpacing: 4.0,
+                        ),
+                      ),
+                    ],
                   ),
-                )
-              : const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF2563EB)),
-                ),
 
-          // Clean text overlay at the center top
-          const Positioned(
-            top: 80,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Text(
-                'MARINA BAY',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 3.0,
-                ),
+                  // Footer Branding Block
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: 20.0,
+                      left: 40.0,
+                      right: 40.0,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          height: 1.5,
+                          width: double.infinity,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.amber,
+                                Colors.purple,
+                                Colors.transparent,
+                              ],
+                              stops: [0.0, 0.4, 0.6, 1.0],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Image.asset(
+                          'assets/ev_logo.webp', // EV Homes logo at the bottom
+                          height: 32,
+                          fit: BoxFit.contain,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
