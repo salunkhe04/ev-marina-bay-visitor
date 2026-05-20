@@ -324,7 +324,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
                                   infoTile(
                                     "Unit No",
-                                    attendee.unitNo ?? "No Unit",
+                                    attendee.unitNo.toString(),
                                   ),
 
                                   const SizedBox(height: 10),
