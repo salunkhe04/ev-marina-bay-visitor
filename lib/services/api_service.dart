@@ -5,6 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:marina_bay_cell_building_visitors/core/helper/helper.dart';
+import 'package:marina_bay_cell_building_visitors/model/app_update.dart';
 import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
 import 'package:marina_bay_cell_building_visitors/model/upload_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -203,6 +204,45 @@ class ApiService {
       }
       //Helper.showCustomSnackBar(errorMessage);
 
+      return null;
+    }
+  }
+
+  Future<AppUpdate?> getAppUpdate() async {
+    try {
+      print(" pass 1 eligible");
+      final Response response = await _dio.get(
+        '/app-update?appName=marina_visitor_app',
+      );
+      print(" pass 2 eligible");
+
+      if (response.data['code'] != 200) {
+        //Helper.showCustomSnackBar(response.data['message']);
+        return null;
+      }
+
+      final data = response.data["data"];
+
+      print(data);
+      final parsedData = AppUpdate.fromMap(data);
+
+      print(parsedData);
+      return parsedData;
+    } on DioException catch (e) {
+      String errorMessage = 'Something went wrong';
+
+      if (e.response != null) {
+        // Backend response error message
+        errorMessage = e.response?.data['message'] ?? errorMessage;
+      } else {
+        // Other types of errors (network, etc.)
+        errorMessage = e.message?.toString() ?? errorMessage;
+      }
+      // Prevent literal 'null' from showing
+      if (errorMessage.trim().toLowerCase() == 'null') {
+        errorMessage = 'Something went wrong';
+      }
+      //Helper.showCustomSnackBar(errorMessage);
       return null;
     }
   }

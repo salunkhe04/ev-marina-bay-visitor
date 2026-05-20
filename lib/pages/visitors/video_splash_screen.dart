@@ -8,6 +8,8 @@ import 'dart:async';
 
 import 'package:marina_bay_cell_building_visitors/navigation_wrapper.dart';
 import 'package:marina_bay_cell_building_visitors/pages/visitors/login_page.dart';
+import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -24,6 +26,11 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    final settingProvider = Provider.of<SettingProvider>(
+      context,
+      listen: false,
+    );
+    settingProvider.getAppUpdate(context);
 
     // Setup fade-in animation for a premium feel
     _animationController = AnimationController(
@@ -39,9 +46,9 @@ class _SplashScreenState extends State<SplashScreen>
 
     Timer(const Duration(seconds: 4), () {
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginPage()),
-        );
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPage()));
       }
     });
   }
