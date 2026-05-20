@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.CAMERA"/>
+    
     <application
         android:label="marina_bay_cell_building_visitors"
         android:name="${applicationName}"
