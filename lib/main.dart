@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'navigation_wrapper.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   runApp(const MarinaBayVisitorApp());
 }

@@ -1,0 +1,51 @@
+class MarinaBayVisitor {
+  final String? name;
+  final int? phoneNumber;
+  final String? purpose;
+  final DateTime? checkInTime;
+  final String? checkInPhoto;
+  final DateTime? checkOutTime;
+  final String? checkOutPhoto;
+  final String? unitNo;
+
+  MarinaBayVisitor({
+    this.name,
+    this.phoneNumber,
+    this.purpose,
+    this.checkInTime,
+    this.checkInPhoto,
+    this.checkOutTime,
+    this.checkOutPhoto,
+    this.unitNo,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      "name": name,
+      "phoneNumber": phoneNumber,
+      "purpose": purpose,
+      "checkInTime": checkInTime?.toIso8601String(),
+      "checkInPhoto": checkInPhoto,
+      "checkOutTime": checkOutTime?.toIso8601String(),
+      "checkOutPhoto": checkOutPhoto,
+      "unitNo": unitNo,
+    };
+  }
+
+  factory MarinaBayVisitor.fromJson(Map<String, dynamic> json) {
+    return MarinaBayVisitor(
+      name: json['name'],
+      phoneNumber: json['phoneNumber'],
+      purpose: json['purpose'],
+      checkInTime: json['checkInTime'] != null
+          ? DateTime.parse(json['checkInTime'])
+          : null,
+      checkInPhoto: json['checkInPhoto'],
+      checkOutTime: json['checkOutTime'] != null
+          ? DateTime.parse(json['checkOutTime'])
+          : null,
+      checkOutPhoto: json['checkOutPhoto'],
+      unitNo: json['unitNo'],
+    );
+  }
+}
