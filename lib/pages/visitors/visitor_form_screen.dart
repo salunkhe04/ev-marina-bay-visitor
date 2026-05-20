@@ -1,6 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
+import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart';
+import 'package:marina_bay_cell_building_visitors/services/api_service.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 
 // Your EV Homes feature components and state engines
 // import 'package:ev_homes/core/providers/attendance_provider.dart';
@@ -23,6 +29,11 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   final TextEditingController _commentController = TextEditingController();
   final TextEditingController _flatNoController = TextEditingController();
 
+  File? capturedImageFile;
+  String? capturedImageUrl;
+  final ImagePicker _picker = ImagePicker();
+
+  bool isLoading = false;
   TimeOfDay? _selectedTimeIn;
   String _selectedPurpose = 'Visitor';
 
@@ -37,6 +48,59 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         if (isTimeIn) {
           _selectedTimeIn = picked;
         }
+      });
+    }
+  }
+
+  Future<void> capturePhoto() async {
+    final XFile? photo = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 70,
+    );
+
+    if (photo != null) {
+      setState(() {
+        capturedImageFile = File(photo.path);
+      });
+    }
+  }
+
+  Future<void> onSubmit() async {
+    final settingProvider = Provider.of<SettingProvider>(
+      context,
+      listen: false,
+    );
+
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      // Upload captured image
+      if (capturedImageFile != null) {
+        final uploadedFile = await ApiService().uploadFile(capturedImageFile!);
+
+        capturedImageUrl = uploadedFile?.downloadUrl;
+      }
+
+      final dta = MarinaBayVisitor(
+        name: _nameController.text,
+        phoneNumber: int.parse(_contactController.text),
+        purpose: _selectedPurpose,
+        checkInTime: DateTime.now(),
+        checkInPhoto: capturedImageUrl,
+      );
+
+      final newMap = dta.toJson();
+
+      await settingProvider.addMarinaVisitor(newMap);
+
+      Navigator.of(context).pop();
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      setState(() {
+        isLoading = false;
       });
     }
   }
@@ -196,149 +260,43 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    // Consumer2<AttendanceProvider, GeolocationProvider>(
-                    //   builder: (context, attendanceProvider, geolocationProvider, child) {
-                    //     final bool isCheckedIn =
-                    //         attendanceProvider.attendance?.checkInTime != null;
-                    //     final bool isCheckedOut =
-                    //         attendanceProvider.attendance?.checkOutTime != null;
+                    GestureDetector(
+                      onTap: capturePhoto,
+                      child: Container(
+                        height: 140,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey.shade100,
+                        ),
+                        child: capturedImageFile == null
+                            ? const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.camera_alt,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Tap to Capture Photo',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ],
+                              )
+                            : ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(
+                                  capturedImageFile!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
+                              ),
+                      ),
+                    ),
 
-                    //     String cardTitle = "Biometric Verification";
-                    //     String actionButtonText = "Punch IN";
-                    //     Color statusColor = const Color(
-                    //       0xFF2563EB,
-                    //     ); // Premium Blue
-                    //     IconData statusIcon = Icons.fingerprint_rounded;
-
-                    //     if (isCheckedIn && !isCheckedOut) {
-                    //       cardTitle = "Active Session: Clocked In";
-                    //       actionButtonText = "Punch OUT";
-                    //       statusColor = const Color(
-                    //         0xFF10B981,
-                    //       ); // Emerald Green
-                    //       statusIcon = Icons.gpp_good_rounded;
-                    //     } else if (isCheckedOut) {
-                    //       cardTitle = "Verification Completed";
-                    //       actionButtonText = "Completed";
-                    //       statusColor = const Color(0xFF64748B); // Slate Gray
-                    //       statusIcon = Icons.lock_clock_rounded;
-                    //     }
-
-                    //     return Container(
-                    //       width: double.infinity,
-                    //       padding: const EdgeInsets.all(14),
-                    //       decoration: BoxDecoration(
-                    //         color: Colors.white,
-                    //         borderRadius: BorderRadius.circular(16),
-                    //         border: Border.all(color: const Color(0xFFE2E8F0)),
-                    //         backgroundColor: const Color(0xFFF8FAFC),
-                    //       ),
-                    //       child: Column(
-                    //         crossAxisAlignment: CrossAxisAlignment.start,
-                    //         children: [
-                    //           Row(
-                    //             children: [
-                    //               Container(
-                    //                 padding: const EdgeInsets.all(8),
-                    //                 decoration: BoxDecoration(
-                    //                   color: statusColor.withOpacity(0.1),
-                    //                   shape: BoxShape.circle,
-                    //                 ),
-                    //                 child: Icon(
-                    //                   statusIcon,
-                    //                   color: statusColor,
-                    //                   size: 20,
-                    //                 ),
-                    //               ),
-                    //               const SizedBox(width: 12),
-                    //               Expanded(
-                    //                 child: Column(
-                    //                   crossAxisAlignment:
-                    //                       CrossAxisAlignment.start,
-                    //                   children: [
-                    //                     Text(
-                    //                       cardTitle,
-                    //                       style: const TextStyle(
-                    //                         fontSize: 14,
-                    //                         fontWeight: FontWeight.bold,
-                    //                         color: Color(0xFF1E293B),
-                    //                       ),
-                    //                     ),
-                    //                     const SizedBox(height: 1),
-                    //                     Text(
-                    //                       geolocationProvider.isWithinRadius
-                    //                           ? "Inside verified parameter boundaries"
-                    //                           : "Checking operational parameters...",
-                    //                       style: TextStyle(
-                    //                         fontSize: 11,
-                    //                         color:
-                    //                             geolocationProvider
-                    //                                 .isWithinRadius
-                    //                             ? const Color(0xFF64748B)
-                    //                             : const Color(0xFF64748B),
-                    //                       ),
-                    //                     ),
-                    //                   ],
-                    //                 ),
-                    //               ),
-                    //             ],
-                    //           ),
-                    //           const SizedBox(height: 12),
-                    //           SizedBox(
-                    //             width: double.infinity,
-                    //             height: 44,
-                    //             child: ElevatedButton(
-                    //               onPressed: isCheckedOut
-                    //                   ? null
-                    //                   : () {
-                    //                       final String type = isCheckedIn
-                    //                           ? "OUT"
-                    //                           : "IN";
-                    //                       // final settingProvider =
-                    //                       //     Provider.of<SettingProvider>(
-                    //                       //       context,
-                    //                       //       listen: false,
-                    //                       //     );
-
-                    //                       Navigator.of(context).push(
-                    //                         MaterialPageRoute(
-                    //                           builder: (context) =>
-                    //                               TimeInOutScreenFaceRecog(
-                    //                                 type: type,
-                    //                                 id: settingProvider
-                    //                                     .loggedAdmin
-                    //                                     ?.id,
-                    //                               ),
-                    //                         ),
-                    //                       );
-                    //                     },
-                    //               style: ElevatedButton.styleFrom(
-                    //                 backgroundColor: isCheckedIn
-                    //                     ? const Color(0xFFEF4444)
-                    //                     : const Color(0xFF2563EB),
-                    //                 foregroundColor: Colors.white,
-                    //                 elevation: 0,
-                    //                 disabledBackgroundColor: const Color(
-                    //                   0xFFE2E8F0,
-                    //                 ),
-                    //                 shape: RoundedRectangleBorder(
-                    //                   borderRadius: BorderRadius.circular(10),
-                    //                 ),
-                    //               ),
-                    //               child: Text(
-                    //                 actionButtonText,
-                    //                 style: const TextStyle(
-                    //                   fontSize: 13,
-                    //                   fontWeight: FontWeight.bold,
-                    //                 ),
-                    //               ),
-                    //             ),
-                    //           ),
-                    //         ],
-                    //       ),
-                    //     );
-                    //   },
-                    // ),
                     const SizedBox(height: 18),
 
                     // Schedule Timings
@@ -384,15 +342,8 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
               Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Visitor registration complete'),
-                        ),
-                      );
-                    }
-                  },
+                  onPressed: onSubmit,
+
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
