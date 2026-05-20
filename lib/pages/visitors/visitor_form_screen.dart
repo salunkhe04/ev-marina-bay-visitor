@@ -231,7 +231,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
             quality: 40,
           );
           final compressedFile = File(
-            '${capturedImageFile!.parent.path}/marinaVisitorApp${DateTime.now().millisecondsSinceEpoch}.jpg',
+            '${capturedImageFile!.parent.path}/marinaVisitorApp-${DateTime.now().millisecondsSinceEpoch}.jpg',
           );
           await compressedFile.writeAsBytes(compressedImageBytes);
           final uploadedFile = await ApiService().uploadFile(compressedFile);

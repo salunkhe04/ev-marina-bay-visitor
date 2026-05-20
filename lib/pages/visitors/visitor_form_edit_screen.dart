@@ -5,15 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
+import 'package:marina_bay_cell_building_visitors/core/helper/helper.dart';
 import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
 import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart';
 import 'package:marina_bay_cell_building_visitors/services/api_service.dart';
 import 'package:provider/provider.dart';
 
 class VisitorFormEditScreen extends StatefulWidget {
-  final MarinaBayVisitor visitor;
+  final MarinaBayVisitor? visitor;
 
-  const VisitorFormEditScreen({super.key, required this.visitor});
+  const VisitorFormEditScreen({super.key, this.visitor});
 
   @override
   State<VisitorFormEditScreen> createState() => _VisitorFormEditScreenState();
@@ -54,26 +55,27 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
 
   bool _timeInError = false;
 
+  File? checkOutImageFile;
+
+  String? checkOutImageUrl;
+
+  TimeOfDay? _selectedTimeOut;
   @override
   void initState() {
     super.initState();
-
     final visitor = widget.visitor;
-
-    _nameController.text = visitor.name ?? '';
-
-    _contactController.text = visitor.phoneNumber?.toString() ?? '';
-
-    _commentController.text = visitor.purpose ?? '';
-
-    _flatNoController.text = visitor.unitNo?.toString() ?? '';
-
-    _selectedType = visitor.type ?? 'Visitor';
-
-    capturedImageUrl = visitor.checkInPhoto;
-
-    if (visitor.checkInTime != null) {
-      _selectedTimeIn = TimeOfDay.fromDateTime(visitor.checkInTime!);
+    _nameController.text = visitor?.name ?? '';
+    _contactController.text = visitor?.phoneNumber?.toString() ?? '';
+    _commentController.text = visitor?.purpose ?? '';
+    _flatNoController.text = visitor?.unitNo?.toString() ?? '';
+    _selectedType = visitor?.type ?? 'Visitor';
+    capturedImageUrl = visitor?.checkInPhoto;
+    if (visitor?.checkInTime != null) {
+      _selectedTimeIn = TimeOfDay.fromDateTime(visitor!.checkInTime!);
+    }
+    checkOutImageUrl = visitor?.checkOutPhoto;
+    if (visitor?.checkOutTime != null) {
+      _selectedTimeOut = TimeOfDay.fromDateTime(visitor!.checkOutTime!);
     }
   }
 
@@ -85,9 +87,11 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
 
     if (picked != null) {
       setState(() {
-        if (isTimeIn) {
-          _selectedTimeIn = picked;
-        }
+        // if (isTimeIn) {
+        //   _selectedTimeIn = picked;
+        // } else {
+        _selectedTimeOut = picked;
+        // }
       });
     }
   }
@@ -176,7 +180,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                           final file = await _cameraController!.takePicture();
 
                           setState(() {
-                            capturedImageFile = File(file.path);
+                            checkOutImageFile = File(file.path);
                           });
 
                           if (mounted) {
@@ -233,10 +237,6 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
   }
 
   Future<void> onUpdate() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
     final settingProvider = Provider.of<SettingProvider>(
       context,
       listen: false,
@@ -247,8 +247,8 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
         isLoading = true;
       });
 
-      if (capturedImageFile != null) {
-        final imageBytes = await capturedImageFile!.readAsBytes();
+      if (checkOutImageFile != null) {
+        final imageBytes = await checkOutImageFile!.readAsBytes();
 
         img.Image? capturedImage = img.decodeImage(imageBytes);
 
@@ -259,40 +259,52 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
           );
 
           final compressedFile = File(
-            '${capturedImageFile!.parent.path}/visitor_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            '${checkOutImageFile!.parent.path}/checkout-${DateTime.now().millisecondsSinceEpoch}.jpg',
           );
 
           await compressedFile.writeAsBytes(compressedImageBytes);
 
           final uploadedFile = await ApiService().uploadFile(compressedFile);
 
-          capturedImageUrl = uploadedFile?.downloadUrl;
+          checkOutImageUrl = uploadedFile?.downloadUrl;
         }
       }
 
+      DateTime? checkoutDateTime;
+
+      if (_selectedTimeOut != null && widget.visitor?.checkInTime != null) {
+        final checkInDate = widget.visitor!.checkInTime!;
+
+        checkoutDateTime = DateTime(
+          checkInDate.year,
+          checkInDate.month,
+          checkInDate.day,
+          _selectedTimeOut!.hour,
+          _selectedTimeOut!.minute,
+        );
+      }
+
       final updatedVisitor = MarinaBayVisitor(
-        // id: widget.visitor.id,
-        name: _nameController.text,
-        phoneNumber: int.tryParse(_contactController.text),
-        checkInPhoto: capturedImageUrl,
-        unitNo: int.tryParse(_flatNoController.text),
-        purpose: _commentController.text,
-        type: _selectedType,
-        checkInTime: widget.visitor.checkInTime,
-        checkOutTime: widget.visitor.checkOutTime,
-        checkOutPhoto: widget.visitor.checkOutPhoto,
-        date: widget.visitor.date,
+        name: widget?.visitor?.name,
+        phoneNumber: widget?.visitor?.phoneNumber,
+        type: widget?.visitor?.type,
+        purpose: widget?.visitor?.purpose,
+        date: widget?.visitor?.date,
+        checkInPhoto: widget.visitor?.checkInPhoto,
+        checkInTime: widget.visitor?.checkInTime,
+        checkOutPhoto: checkOutImageUrl,
+        checkOutTime: checkoutDateTime,
       );
 
-      // await settingProvider.updateMarinaVisitor(
-      //   widget.visitor.id!,
-      //   updatedVisitor.toJson(),
-      // );
+      await settingProvider.updateVisitor(
+        widget.visitor?.id ?? "",
+        updatedVisitor.toJson(),
+      );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Visitor updated successfully")),
+        const SnackBar(content: Text("Visitor checked out successfully")),
       );
 
       Navigator.pop(context);
@@ -492,7 +504,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                     const SizedBox(height: 18),
 
                     const Text(
-                      'Schedule Timings',
+                      'Time In',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -524,9 +536,11 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _selectedTimeIn != null
-                                  ? _selectedTimeIn!.format(context)
-                                  : '--:--',
+                              Helper.formatDateOnly(
+                                widget.visitor?.checkInTime
+                                        ?.toIso8601String() ??
+                                    "",
+                              ),
                             ),
                           ],
                         ),
@@ -555,7 +569,9 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                           borderRadius: BorderRadius.circular(12),
                           color: Colors.grey.shade100,
                         ),
-                        child: capturedImageFile == null
+                        child:
+                            checkOutImageFile == null &&
+                                checkOutImageUrl == null
                             ? const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -573,19 +589,24 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                               )
                             : ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.file(
-                                  capturedImageFile!,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                ),
+                                child: checkOutImageFile != null
+                                    ? Image.file(
+                                        checkOutImageFile!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      )
+                                    : Image.network(
+                                        checkOutImageUrl!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      ),
                               ),
                       ),
                     ),
-
                     const SizedBox(height: 18),
 
                     const Text(
-                      'Schedule Timings',
+                      'Time Out',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -595,8 +616,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                     const SizedBox(height: 8),
 
                     InkWell(
-                      // onTap: () => _selectTime(context, true),
-                      onTap: null,
+                      onTap: () => _selectTime(context, false),
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -617,15 +637,18 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _selectedTimeIn != null
-                                  ? _selectedTimeIn!.format(context)
-                                  : '--:--',
+                              _selectedTimeOut != null
+                                  ? _selectedTimeOut!.format(context)
+                                  : Helper.formatDateOnly(
+                                      widget.visitor?.checkOutTime
+                                              ?.toIso8601String() ??
+                                          "",
+                                    ),
                             ),
                           ],
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 18),
 
                     TextFormField(

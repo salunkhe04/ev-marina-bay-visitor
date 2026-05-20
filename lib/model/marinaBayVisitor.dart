@@ -1,4 +1,5 @@
 class MarinaBayVisitor {
+  final String? id;
   final String? name;
   final int? phoneNumber;
   final String? purpose;
@@ -11,6 +12,7 @@ class MarinaBayVisitor {
   final String? type;
 
   MarinaBayVisitor({
+    this.id,
     this.name,
     this.phoneNumber,
     this.purpose,
@@ -25,6 +27,7 @@ class MarinaBayVisitor {
 
   Map<String, dynamic> toJson() {
     return {
+      "id": id,
       "name": name,
       "phoneNumber": phoneNumber,
       "purpose": purpose,
@@ -40,6 +43,7 @@ class MarinaBayVisitor {
 
   factory MarinaBayVisitor.fromJson(Map<String, dynamic> json) {
     return MarinaBayVisitor(
+      id: json['_id'],
       name: json['name'],
       phoneNumber: json['phoneNumber'],
       purpose: json['purpose'],
