@@ -46,4 +46,14 @@ class Helper {
       });
     }
   }
+
+  static String? getTextOrNull(TextEditingController controller) {
+    final text = controller.text.trim();
+
+    if (text.isEmpty) {
+      return null;
+    }
+
+    return text;
+  }
 }
