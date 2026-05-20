@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:marina_bay_cell_building_visitors/features/visitors/video_splash_screen.dart';
+import 'package:marina_bay_cell_building_visitors/pages/visitors/video_splash_screen.dart';
 
 void main() {
   runApp(const MarinaBayVisitorApp());
