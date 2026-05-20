@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
@@ -34,6 +35,11 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   String? capturedImageUrl;
   final ImagePicker _picker = ImagePicker();
 
+  bool isError = false;
+  bool _faceMatched = false;
+  CameraController? _cameraController;
+  List<CameraDescription>? cameras;
+
   bool isLoading = false;
   TimeOfDay? _selectedTimeIn;
   String _selectedType = 'Visitor';
@@ -56,15 +62,147 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   }
 
   Future<void> capturePhoto() async {
-    final XFile? photo = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 60,
+    await initializeCamera();
+
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.blueGrey,
+          body: SafeArea(
+            child: Stack(
+              children: [
+                // Camera Preview
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.all(20),
+                    height: 350,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: _getCameraBorderColor(),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _getCameraBorderColor().withOpacity(0.4),
+                          blurRadius: 18,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: AspectRatio(
+                        aspectRatio: _cameraController!.value.aspectRatio,
+                        child: CameraPreview(_cameraController!),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Top Bar
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+
+                      const Text(
+                        "Capture Visitor Photo",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(width: 48),
+                    ],
+                  ),
+                ),
+
+                // Bottom Capture Button
+                Positioned(
+                  bottom: 40,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () async {
+                        try {
+                          final file = await _cameraController!.takePicture();
+
+                          setState(() {
+                            capturedImageFile = File(file.path);
+                            // photoError = null;
+                          });
+
+                          if (mounted) {
+                            Navigator.pop(context);
+                          }
+                        } catch (e) {
+                          setState(() {
+                            isError = true;
+                          });
+                        }
+                      },
+                      child: Container(
+                        width: 82,
+                        height: 82,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 5),
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
-    if (photo != null) {
-      setState(() {
-        capturedImageFile = File(photo.path);
-      });
-    }
+  }
+
+  Future<void> initializeCamera() async {
+    cameras = await availableCameras();
+
+    final frontCamera = cameras!.firstWhere(
+      (camera) => camera.lensDirection == CameraLensDirection.front,
+    );
+
+    _cameraController = CameraController(
+      frontCamera,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
+
+    await _cameraController!.initialize();
+
+    setState(() {});
   }
 
   Future<void> onSubmit() async {
@@ -117,13 +255,14 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
       final newMap = dta.toJson();
 
       await settingProvider.addMarinaVisitor(newMap);
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Visitor added successfully")),
       );
 
       Navigator.of(context).pop();
     } catch (e) {
-      debugPrint(e.toString());
     } finally {
       setState(() {
         isLoading = false;
@@ -458,5 +597,11 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         ),
       ),
     );
+  }
+
+  Color _getCameraBorderColor() {
+    if (isError) return Colors.red;
+    if (_faceMatched) return Colors.green;
+    return Colors.orange;
   }
 }
