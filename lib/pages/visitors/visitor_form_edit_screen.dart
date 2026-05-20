@@ -3,48 +3,79 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
 import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart';
 import 'package:marina_bay_cell_building_visitors/services/api_service.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image/image.dart' as img; // Import the image package
 
-// Your EV Homes feature components and state engines
-// import 'package:ev_homes/core/providers/attendance_provider.dart';
-// import 'package:ev_homes/core/providers/geolocation_provider.dart';
-// import 'package:ev_homes/core/providers/setting_provider.dart';
-// import 'time_in_out_screen_face_recog_v2.dart';
+class VisitorFormEditScreen extends StatefulWidget {
+  final MarinaBayVisitor visitor;
 
-class VisitorFormScreen extends StatefulWidget {
-  const VisitorFormScreen({super.key});
+  const VisitorFormEditScreen({super.key, required this.visitor});
 
   @override
-  State<VisitorFormScreen> createState() => _VisitorFormScreenState();
+  State<VisitorFormEditScreen> createState() => _VisitorFormEditScreenState();
 }
 
-class _VisitorFormScreenState extends State<VisitorFormScreen> {
+class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _nameController = TextEditingController();
+
   final TextEditingController _contactController = TextEditingController();
+
   final TextEditingController _commentController = TextEditingController();
+
   final TextEditingController _flatNoController = TextEditingController();
 
   File? capturedImageFile;
+
   String? capturedImageUrl;
+
   final ImagePicker _picker = ImagePicker();
 
   bool isError = false;
+
   bool _faceMatched = false;
+
   CameraController? _cameraController;
+
   List<CameraDescription>? cameras;
 
   bool isLoading = false;
+
   TimeOfDay? _selectedTimeIn;
+
   String _selectedType = 'Visitor';
+
   bool _photoError = false;
+
   bool _timeInError = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final visitor = widget.visitor;
+
+    _nameController.text = visitor.name ?? '';
+
+    _contactController.text = visitor.phoneNumber?.toString() ?? '';
+
+    _commentController.text = visitor.purpose ?? '';
+
+    _flatNoController.text = visitor.unitNo?.toString() ?? '';
+
+    _selectedType = visitor.type ?? 'Visitor';
+
+    capturedImageUrl = visitor.checkInPhoto;
+
+    if (visitor.checkInTime != null) {
+      _selectedTimeIn = TimeOfDay.fromDateTime(visitor.checkInTime!);
+    }
+  }
 
   Future<void> _selectTime(BuildContext context, bool isTimeIn) async {
     final TimeOfDay? picked = await showTimePicker(
@@ -74,7 +105,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
           body: SafeArea(
             child: Stack(
               children: [
-                // Camera Preview
                 Center(
                   child: Container(
                     margin: const EdgeInsets.all(20),
@@ -103,7 +133,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                   ),
                 ),
 
-                // Top Bar
                 Positioned(
                   top: 16,
                   left: 16,
@@ -136,7 +165,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                   ),
                 ),
 
-                // Bottom Capture Button
                 Positioned(
                   bottom: 40,
                   left: 0,
@@ -149,7 +177,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
                           setState(() {
                             capturedImageFile = File(file.path);
-                            // photoError = null;
                           });
 
                           if (mounted) {
@@ -205,10 +232,11 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
     setState(() {});
   }
 
-  Future<void> onSubmit() async {
+  Future<void> onUpdate() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
     final settingProvider = Provider.of<SettingProvider>(
       context,
       listen: false,
@@ -229,40 +257,47 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
             capturedImage,
             quality: 40,
           );
+
           final compressedFile = File(
-            '${capturedImageFile!.parent.path}/marinaVisitorApp${DateTime.now().millisecondsSinceEpoch}.jpg',
+            '${capturedImageFile!.parent.path}/visitor_${DateTime.now().millisecondsSinceEpoch}.jpg',
           );
+
           await compressedFile.writeAsBytes(compressedImageBytes);
+
           final uploadedFile = await ApiService().uploadFile(compressedFile);
-          // print(uploadedFile);
+
           capturedImageUrl = uploadedFile?.downloadUrl;
         }
       }
 
-      print(capturedImageUrl);
-
-      final dta = MarinaBayVisitor(
+      final updatedVisitor = MarinaBayVisitor(
+        // id: widget.visitor.id,
         name: _nameController.text,
-        phoneNumber: int.parse(_contactController.text),
-        checkInTime: DateTime.now(),
+        phoneNumber: int.tryParse(_contactController.text),
         checkInPhoto: capturedImageUrl,
         unitNo: int.tryParse(_flatNoController.text),
-        date: DateTime.now(),
-        type: _selectedType,
         purpose: _commentController.text,
+        type: _selectedType,
+        checkInTime: widget.visitor.checkInTime,
+        checkOutTime: widget.visitor.checkOutTime,
+        checkOutPhoto: widget.visitor.checkOutPhoto,
+        date: widget.visitor.date,
       );
 
-      final newMap = dta.toJson();
-
-      await settingProvider.addMarinaVisitor(newMap);
+      // await settingProvider.updateMarinaVisitor(
+      //   widget.visitor.id!,
+      //   updatedVisitor.toJson(),
+      // );
 
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Visitor added successfully")),
+        const SnackBar(content: Text("Visitor updated successfully")),
       );
 
-      Navigator.of(context).pop();
+      Navigator.pop(context);
     } catch (e) {
+      debugPrint(e.toString());
     } finally {
       setState(() {
         isLoading = false;
@@ -275,7 +310,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Marina Bay Visitors'),
+        title: const Text('Edit Visitor'),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
@@ -289,47 +324,34 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Registration Form',
+                'Edit Visitor',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
                 ),
               ),
-              const Text(
-                'Fill out building entry credentials below',
-                style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-              ),
+
               const SizedBox(height: 20),
 
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.white, Color(0xFFF8FAFC)],
-                  ),
+                  color: Colors.white,
                   border: Border.all(color: const Color(0xFFEDF2F7)),
                 ),
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Full Name
                     TextFormField(
                       controller: _nameController,
+                      readOnly: true,
+                      enabled: false,
                       decoration: const InputDecoration(
                         labelText: 'Full Name',
-                        prefixIcon: Icon(Icons.badge_outlined, size: 22),
+                        prefixIcon: Icon(Icons.badge_outlined),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -341,36 +363,34 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
                     const SizedBox(height: 18),
 
-                    // Contact
                     TextFormField(
                       controller: _contactController,
+                      readOnly: true,
+                      enabled: false,
                       decoration: const InputDecoration(
                         labelText: 'Contact Number',
-                        prefixIcon: Icon(Icons.phone_iphone_outlined, size: 22),
+                        prefixIcon: Icon(Icons.phone_iphone_outlined),
                       ),
                       keyboardType: TextInputType.number,
                       maxLength: 10,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: (value) =>
-                          value!.isEmpty ? 'Contact info required' : null,
                     ),
 
                     const SizedBox(height: 18),
 
-                    // Purpose Dropdown
                     const Text(
                       'Authority',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
                       ),
                     ),
+
                     const SizedBox(height: 8),
+
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
@@ -378,7 +398,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                         child: DropdownButton<String>(
                           value: _selectedType,
                           isExpanded: true,
-                          icon: const Icon(Icons.keyboard_arrow_down_rounded),
                           items: const [
                             DropdownMenuItem(
                               value: 'Visitor',
@@ -389,41 +408,135 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                               child: Text('Owner'),
                             ),
                           ],
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedType = value!;
-                            });
-                          },
+                          // onChanged: (value) {
+                          //   setState(() {
+                          //     _selectedType = value!;
+                          //   });
+                          // },
+                          onChanged: null,
                         ),
                       ),
                     ),
 
-                    // Flat No field only for Owner
                     if (_selectedType == 'Owner') ...[
                       const SizedBox(height: 18),
+
                       TextFormField(
                         controller: _flatNoController,
                         keyboardType: TextInputType.number,
-                        maxLength: 6,
                         decoration: const InputDecoration(
                           labelText: 'Flat No.',
-                          prefixIcon: Icon(Icons.apartment_rounded, size: 22),
+                          prefixIcon: Icon(Icons.apartment_rounded),
                         ),
-                        validator: (value) {
-                          if (_selectedType == 'Owner' &&
-                              (value == null || value.isEmpty)) {
-                            return 'Flat number required';
-                          }
-                          return null;
-                        },
                       ),
                     ],
 
                     const SizedBox(height: 24),
 
-                    // NEW: Dynamic Biometric Face Verification Field
                     const Text(
                       'Check-In',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    GestureDetector(
+                      // onTap: capturePhoto,
+                      onTap: null,
+                      child: Container(
+                        height: 140,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey.shade100,
+                        ),
+                        child:
+                            capturedImageFile == null &&
+                                capturedImageUrl == null
+                            ? const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.camera_alt,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Tap to Capture Photo',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ],
+                              )
+                            : ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: capturedImageFile != null
+                                    ? Image.file(
+                                        capturedImageFile!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      )
+                                    : Image.network(
+                                        capturedImageUrl!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      ),
+                              ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    const Text(
+                      'Schedule Timings',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    InkWell(
+                      // onTap: () => _selectTime(context, true),
+                      onTap: null,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time_rounded,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _selectedTimeIn != null
+                                  ? _selectedTimeIn!.format(context)
+                                  : '--:--',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    const Text(
+                      'Check-Out',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -471,37 +584,55 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
                     const SizedBox(height: 18),
 
-                    // Schedule Timings
                     const Text(
                       'Schedule Timings',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
                       ),
                     ),
+
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTimePickerField(
-                            title: 'Time In',
-                            time: _selectedTimeIn,
-                            onTap: () => _selectTime(context, true),
-                          ),
+
+                    InkWell(
+                      // onTap: () => _selectTime(context, true),
+                      onTap: null,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
                         ),
-                      ],
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time_rounded,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _selectedTimeIn != null
+                                  ? _selectedTimeIn!.format(context)
+                                  : '--:--',
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 18),
 
-                    // Comment
                     TextFormField(
+                      readOnly: true,
+                      enabled: false,
                       controller: _commentController,
-                      decoration: const InputDecoration(
-                        labelText: 'Comment',
-                        alignLabelWithHint: true,
-                      ),
+                      decoration: const InputDecoration(labelText: 'Comment'),
                       maxLines: 4,
                     ),
                   ],
@@ -512,8 +643,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
               Center(
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : onSubmit,
-
+                  onPressed: isLoading ? null : onUpdate,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
@@ -521,7 +651,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    elevation: 0,
                   ),
                   child: isLoading
                       ? const SizedBox(
@@ -533,7 +662,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                           ),
                         )
                       : const Text(
-                          'Submit Entry',
+                          'Update Entry',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -548,60 +677,11 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
     );
   }
 
-  Widget _buildTimePickerField({
-    required String title,
-    required TimeOfDay? time,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(
-                  Icons.access_time_rounded,
-                  size: 16,
-                  color: Color(0xFF2563EB),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  time != null ? time.format(context) : '--:--',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Color _getCameraBorderColor() {
     if (isError) return Colors.red;
+
     if (_faceMatched) return Colors.green;
+
     return Colors.orange;
   }
 }

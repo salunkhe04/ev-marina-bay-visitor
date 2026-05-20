@@ -73,7 +73,7 @@ class MarinaBayVisitorApp extends StatelessWidget {
           labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
         ),
       ),
-      home: const SplashScreen(),
+      home: const NavigationWrapper(),
     );
   }
 }

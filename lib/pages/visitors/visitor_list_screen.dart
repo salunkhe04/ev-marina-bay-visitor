@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
+import 'package:marina_bay_cell_building_visitors/pages/visitors/visitor_form_edit_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:simple_month_year_picker/simple_month_year_picker.dart';
 
@@ -262,147 +263,160 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                   itemBuilder: (context, index) {
                     final MarinaBayVisitor attendee = filteredAttendance[index];
 
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
+                    return GestureDetector(
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                VisitorFormEditScreen(visitor: attendee),
                           ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            /// LEFT
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  /// Visitor Name
-                                  Text(
-                                    attendee.name ?? "Unknown Visitor",
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF1565C0),
+                        );
+
+                        onRefresh();
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              /// LEFT
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    /// Visitor Name
+                                    Text(
+                                      attendee.name ?? "Unknown Visitor",
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF1565C0),
+                                      ),
                                     ),
-                                  ),
 
-                                  const SizedBox(height: 4),
+                                    const SizedBox(height: 4),
 
-                                  /// Date
+                                    /// Date
+                                    Text(
+                                      attendee.checkInTime != null
+                                          ? DateFormat(
+                                              "dd MMM yyyy",
+                                            ).format(attendee.checkInTime!)
+                                          : "No Date",
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 10),
+
+                                    infoTile(
+                                      "Purpose",
+                                      attendee.purpose ?? "No Purpose",
+                                    ),
+
+                                    const SizedBox(height: 8),
+
+                                    infoTile(
+                                      "Unit No",
+                                      attendee.unitNo.toString(),
+                                    ),
+
+                                    const SizedBox(height: 10),
+
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: attendee.checkOutTime == null
+                                            ? Colors.green.shade50
+                                            : Colors.blue.shade50,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        attendee.checkOutTime == null
+                                            ? "CHECKED IN"
+                                            : "CHECKED OUT",
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: attendee.checkOutTime == null
+                                              ? Colors.green
+                                              : Colors.blue,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(width: 10),
+
+                              /// CHECK IN
+                              Column(
+                                children: [
                                   Text(
                                     attendee.checkInTime != null
                                         ? DateFormat(
-                                            "dd MMM yyyy",
+                                            "hh:mm:ss a",
                                           ).format(attendee.checkInTime!)
-                                        : "No Date",
+                                        : "NA",
                                     style: const TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                     ),
-                                  ),
-
-                                  const SizedBox(height: 10),
-
-                                  infoTile(
-                                    "Purpose",
-                                    attendee.purpose ?? "No Purpose",
                                   ),
 
                                   const SizedBox(height: 8),
 
-                                  infoTile(
-                                    "Unit No",
-                                    attendee.unitNo.toString(),
-                                  ),
-
-                                  const SizedBox(height: 10),
-
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: attendee.checkOutTime == null
-                                          ? Colors.green.shade50
-                                          : Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      attendee.checkOutTime == null
-                                          ? "CHECKED IN"
-                                          : "CHECKED OUT",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: attendee.checkOutTime == null
-                                            ? Colors.green
-                                            : Colors.blue,
-                                      ),
-                                    ),
-                                  ),
+                                  photoWidget(attendee.checkInPhoto ?? ""),
                                 ],
                               ),
-                            ),
 
-                            const SizedBox(width: 10),
+                              const SizedBox(width: 10),
 
-                            /// CHECK IN
-                            Column(
-                              children: [
-                                Text(
-                                  attendee.checkInTime != null
-                                      ? DateFormat(
-                                          "hh:mm:ss a",
-                                        ).format(attendee.checkInTime!)
-                                      : "NA",
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
+                              /// CHECK OUT
+                              Column(
+                                children: [
+                                  Text(
+                                    attendee.checkOutTime != null
+                                        ? DateFormat(
+                                            "hh:mm:ss a",
+                                          ).format(attendee.checkOutTime!)
+                                        : "NA",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                ),
 
-                                const SizedBox(height: 8),
+                                  const SizedBox(height: 8),
 
-                                photoWidget(attendee.checkInPhoto ?? ""),
-                              ],
-                            ),
-
-                            const SizedBox(width: 10),
-
-                            /// CHECK OUT
-                            Column(
-                              children: [
-                                Text(
-                                  attendee.checkOutTime != null
-                                      ? DateFormat(
-                                          "hh:mm:ss a",
-                                        ).format(attendee.checkOutTime!)
-                                      : "NA",
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-
-                                const SizedBox(height: 8),
-
-                                photoWidget(attendee.checkOutPhoto ?? ""),
-                              ],
-                            ),
-                          ],
+                                  photoWidget(attendee.checkOutPhoto ?? ""),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
