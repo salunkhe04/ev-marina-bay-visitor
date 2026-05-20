@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:marina_bay_cell_building_visitors/pages/visitors/video_splash_screen.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   runApp(const MarinaBayVisitorApp());
 }
