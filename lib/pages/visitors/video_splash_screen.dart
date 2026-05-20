@@ -6,6 +6,8 @@ import 'package:marina_bay_cell_building_visitors/main.dart';
 
 import 'dart:async';
 
+import 'package:marina_bay_cell_building_visitors/navigation_wrapper.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
 
@@ -37,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen>
     Timer(const Duration(seconds: 4), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MarinaBayVisitorApp()),
+          MaterialPageRoute(builder: (_) => const NavigationWrapper()),
         );
       }
     });
