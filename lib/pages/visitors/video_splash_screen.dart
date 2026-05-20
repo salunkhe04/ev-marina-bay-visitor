@@ -7,6 +7,7 @@ import 'package:marina_bay_cell_building_visitors/main.dart';
 import 'dart:async';
 
 import 'package:marina_bay_cell_building_visitors/navigation_wrapper.dart';
+import 'package:marina_bay_cell_building_visitors/pages/visitors/login_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -39,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen>
     Timer(const Duration(seconds: 4), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const NavigationWrapper()),
+          MaterialPageRoute(builder: (_) => const LoginPage()),
         );
       }
     });
@@ -70,23 +71,23 @@ class _SplashScreenState extends State<SplashScreen>
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.asset(
-                        'assets/logo.png', // Main 10 Marina Bay Logo
+                      Image.network(
+                        'https://cdn.evhomes.tech/8f698a49-6c58-43a1-8622-a9a616a88f3e-10%20marina%20bay%20logo%20golden.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaWxlbmFtZSI6IjhmNjk4YTQ5LTZjNTgtNDNhMS04NjIyLWE5YTYxNmE4OGYzZS0xMCBtYXJpbmEgYmF5IGxvZ28gZ29sZGVuLnBuZyIsImlhdCI6MTczMzgzOTI5MH0.WWfDOWt5E7-KB-Fg4OwtImqLImYpTGNnuavB84_RZco', // Main 10 Marina Bay Logo
                         height: 180,
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 30),
-                      Text(
-                        'RESIDENT PORTAL',
-                        style: TextStyle(
-                          // Gold text still looks stunning and sharp against pure white
-                          color: const Color(0xFFD4AF37),
-                          fontSize: 22,
-                          fontWeight: FontWeight
-                              .w500, // Slightly bumped weight for white background crispness
-                          letterSpacing: 4.0,
-                        ),
-                      ),
+                      // Text(
+                      //   'RESIDENT PORTAL',
+                      //   style: TextStyle(
+                      //     // Gold text still looks stunning and sharp against pure white
+                      //     color: const Color(0xFFD4AF37),
+                      //     fontSize: 22,
+                      //     fontWeight: FontWeight
+                      //         .w500, // Slightly bumped weight for white background crispness
+                      //     letterSpacing: 4.0,
+                      //   ),
+                      // ),
                     ],
                   ),
 
@@ -116,8 +117,8 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Image.asset(
-                          'assets/ev_logo.webp', // EV Homes logo at the bottom
+                        Image.network(
+                          'https://cdn.evhomes.tech/af8c2924-628d-4a10-8a5d-9c8463af5ce9-IMG-20241204-WA0000.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaWxlbmFtZSI6ImFmOGMyOTI0LTYyOGQtNGExMC04YTVkLTljODQ2M2FmNWNlOS1JTUctMjAyNDEyMDQtV0EwMDAwLmpwZyIsImlhdCI6MTczMzMwOTQ0OH0.pdtQDRILe__UGYprzT79aW_BhKbFTMxDiemxdJHMFyM', // EV Homes logo at the bottom
                           height: 32,
                           fit: BoxFit.contain,
                         ),
