@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart';
+import 'package:provider/provider.dart';
 import 'navigation_wrapper.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -7,7 +9,14 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
-  runApp(const MarinaBayVisitorApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => SettingProvider()),
+      ],
+      child: const MarinaBayVisitorApp(),
+    ),
+  );
 }
 
 class MarinaBayVisitorApp extends StatelessWidget {
