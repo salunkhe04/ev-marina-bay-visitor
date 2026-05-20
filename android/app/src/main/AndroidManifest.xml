@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     
     <application
-        android:label="marina_bay_cell_building_visitors"
+        android:label="Marina bay visitors form"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
