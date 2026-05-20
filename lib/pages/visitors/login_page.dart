@@ -88,9 +88,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         _passCtrl.text.trim() == staticPassword) {
       await _saveCredentials();
 
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_logged_in', true);
       if (!mounted) return;
-
       setState(() => _isLoading = false);
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const NavigationWrapper()),
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -10,9 +10,9 @@ import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
 import 'package:marina_bay_cell_building_visitors/model/upload_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-// const baseUrl = "https://api.evhomes.tech";
+const baseUrl = "https://api.evhomes.tech";
 
-const baseUrl = "http://192.168.1.14:8082";
+// const baseUrl = "http://192.168.1.14:8082";
 
 const storageUrl = "https://api2.evhomes.tech";
 
@@ -107,11 +107,14 @@ class ApiService {
         return [];
       }
       print(response);
-      final List<dynamic> dataList = response.data["data"];
-      final List<MarinaBayVisitor> designations = dataList.map((data) {
-        return MarinaBayVisitor.fromJson(data as Map<String, dynamic>);
-      }).toList();
-      return designations;
+
+      final rData = response.data?['data'] as List? ?? [];
+      // print("design p 2");
+      final parseList = rData
+          .map((ele) => MarinaBayVisitor.fromJson(ele))
+          .toList();
+
+      return parseList;
     } on DioException catch (e) {
       String errorMessage = 'Something went wrong';
 
