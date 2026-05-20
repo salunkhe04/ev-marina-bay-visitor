@@ -34,6 +34,8 @@ dependencies:
   video_player: ^2.9.0
   camera: ^0.10.5+9
   google_mlkit_face_detection: ^0.11.0
+  intl: ^0.20.2
+  simple_month_year_picker: ^1.1.0
   
   # Caching and State Management
   provider: ^6.1.2
