@@ -57,8 +57,9 @@ class ApiService {
         ),
       });
 
+      print(formData);
       final Response response = await _dio1.post(
-        '/upload/path=marinaVisitorApp',
+        '/upload?path=marinaVisitorApp',
         data: formData,
         options: Options(
           // sendTimeout: Duration(minutes: 5),
@@ -133,20 +134,25 @@ class ApiService {
     Map<String, dynamic> data,
   ) async {
     try {
+      print("1");
       final Response response = await _dio.post(
         '/add-marina-bay-visitors',
         data: data,
       );
+
+      print(response.data);
       if (response.data['code'] != 200) {
-        Helper.showCustomSnackBar(response.data['message']);
+        // Helper.showCustomSnackBar(response.data['message']);
         return null;
       }
 
+      print(response.data);
       final parsedData = MarinaBayVisitor.fromJson(response.data['data']);
       print(parsedData);
       // Helper.showCustomSnackBar(response.data['message'], Colors.green);
       return parsedData;
     } on DioException catch (e) {
+      print(e);
       String errorMessage = 'Something went wrong';
 
       if (e.response != null) {

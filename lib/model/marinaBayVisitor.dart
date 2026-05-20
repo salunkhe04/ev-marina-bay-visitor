@@ -6,7 +6,9 @@ class MarinaBayVisitor {
   final String? checkInPhoto;
   final DateTime? checkOutTime;
   final String? checkOutPhoto;
-  final String? unitNo;
+  final int? unitNo;
+  final DateTime? date;
+  final String? type;
 
   MarinaBayVisitor({
     this.name,
@@ -17,6 +19,8 @@ class MarinaBayVisitor {
     this.checkOutTime,
     this.checkOutPhoto,
     this.unitNo,
+    this.date,
+    this.type,
   });
 
   Map<String, dynamic> toJson() {
@@ -29,6 +33,8 @@ class MarinaBayVisitor {
       "checkOutTime": checkOutTime?.toIso8601String(),
       "checkOutPhoto": checkOutPhoto,
       "unitNo": unitNo,
+      "date": date?.toIso8601String(),
+      "type": type,
     };
   }
 
@@ -46,6 +52,8 @@ class MarinaBayVisitor {
           : null,
       checkOutPhoto: json['checkOutPhoto'],
       unitNo: json['unitNo'],
+      date: json['date'] != null ? DateTime.parse(json['date']) : null,
+      type: json['type'],
     );
   }
 }

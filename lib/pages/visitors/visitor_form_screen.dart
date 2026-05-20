@@ -7,6 +7,7 @@ import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart
 import 'package:marina_bay_cell_building_visitors/services/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img; // Import the image package
 
 // Your EV Homes feature components and state engines
 // import 'package:ev_homes/core/providers/attendance_provider.dart';
@@ -35,7 +36,9 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
   bool isLoading = false;
   TimeOfDay? _selectedTimeIn;
-  String _selectedPurpose = 'Visitor';
+  String _selectedType = 'Visitor';
+  bool _photoError = false;
+  bool _timeInError = false;
 
   Future<void> _selectTime(BuildContext context, bool isTimeIn) async {
     final TimeOfDay? picked = await showTimePicker(
@@ -55,9 +58,8 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   Future<void> capturePhoto() async {
     final XFile? photo = await _picker.pickImage(
       source: ImageSource.camera,
-      imageQuality: 70,
+      imageQuality: 60,
     );
-
     if (photo != null) {
       setState(() {
         capturedImageFile = File(photo.path);
@@ -66,6 +68,9 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   }
 
   Future<void> onSubmit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
     final settingProvider = Provider.of<SettingProvider>(
       context,
       listen: false,
@@ -76,24 +81,45 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         isLoading = true;
       });
 
-      // Upload captured image
       if (capturedImageFile != null) {
-        final uploadedFile = await ApiService().uploadFile(capturedImageFile!);
+        final imageBytes = await capturedImageFile!.readAsBytes();
 
-        capturedImageUrl = uploadedFile?.downloadUrl;
+        img.Image? capturedImage = img.decodeImage(imageBytes);
+
+        if (capturedImage != null) {
+          final compressedImageBytes = img.encodeJpg(
+            capturedImage,
+            quality: 40,
+          );
+          final compressedFile = File(
+            '${capturedImageFile!.parent.path}/marinaVisitorApp${DateTime.now().millisecondsSinceEpoch}.jpg',
+          );
+          await compressedFile.writeAsBytes(compressedImageBytes);
+          final uploadedFile = await ApiService().uploadFile(compressedFile);
+          // print(uploadedFile);
+          capturedImageUrl = uploadedFile?.downloadUrl;
+        }
       }
+
+      print(capturedImageUrl);
 
       final dta = MarinaBayVisitor(
         name: _nameController.text,
         phoneNumber: int.parse(_contactController.text),
-        purpose: _selectedPurpose,
         checkInTime: DateTime.now(),
         checkInPhoto: capturedImageUrl,
+        unitNo: int.tryParse(_flatNoController.text),
+        date: DateTime.now(),
+        type: _selectedType,
+        purpose: _commentController.text,
       );
 
       final newMap = dta.toJson();
 
       await settingProvider.addMarinaVisitor(newMap);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Visitor added successfully")),
+      );
 
       Navigator.of(context).pop();
     } catch (e) {
@@ -166,8 +192,12 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                         labelText: 'Full Name',
                         prefixIcon: Icon(Icons.badge_outlined, size: 22),
                       ),
-                      validator: (value) =>
-                          value!.isEmpty ? 'Name required' : null,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Name is required';
+                        }
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 18),
@@ -180,6 +210,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                         prefixIcon: Icon(Icons.phone_iphone_outlined, size: 22),
                       ),
                       keyboardType: TextInputType.number,
+                      maxLength: 10,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) =>
                           value!.isEmpty ? 'Contact info required' : null,
@@ -189,7 +220,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
                     // Purpose Dropdown
                     const Text(
-                      'Purpose',
+                      'Authority',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -206,7 +237,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: _selectedPurpose,
+                          value: _selectedType,
                           isExpanded: true,
                           icon: const Icon(Icons.keyboard_arrow_down_rounded),
                           items: const [
@@ -221,7 +252,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                           ],
                           onChanged: (value) {
                             setState(() {
-                              _selectedPurpose = value!;
+                              _selectedType = value!;
                             });
                           },
                         ),
@@ -229,16 +260,18 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                     ),
 
                     // Flat No field only for Owner
-                    if (_selectedPurpose == 'Owner') ...[
+                    if (_selectedType == 'Owner') ...[
                       const SizedBox(height: 18),
                       TextFormField(
                         controller: _flatNoController,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
                         decoration: const InputDecoration(
                           labelText: 'Flat No.',
                           prefixIcon: Icon(Icons.apartment_rounded, size: 22),
                         ),
                         validator: (value) {
-                          if (_selectedPurpose == 'Owner' &&
+                          if (_selectedType == 'Owner' &&
                               (value == null || value.isEmpty)) {
                             return 'Flat number required';
                           }
@@ -331,8 +364,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                         alignLabelWithHint: true,
                       ),
                       maxLines: 4,
-                      validator: (value) =>
-                          value!.isEmpty ? 'Comment required' : null,
                     ),
                   ],
                 ),
@@ -342,7 +373,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
               Center(
                 child: ElevatedButton(
-                  onPressed: onSubmit,
+                  onPressed: isLoading ? null : onSubmit,
 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
@@ -353,10 +384,22 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Submit Entry',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Submit Entry',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
