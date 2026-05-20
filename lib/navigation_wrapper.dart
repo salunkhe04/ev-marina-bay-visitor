@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:marina_bay_cell_building_visitors/features/visitors/profile_screen.dart';
+import 'package:marina_bay_cell_building_visitors/pages/visitors/profile_screen.dart';
 import 'package:marina_bay_cell_building_visitors/features/visitors/visitor_form_Screen.dart';
-import 'package:marina_bay_cell_building_visitors/features/visitors/visitor_list_screen.dart';
+import 'package:marina_bay_cell_building_visitors/pages/visitors/visitor_list_screen.dart';
 
 class NavigationWrapper extends StatefulWidget {
   const NavigationWrapper({super.key});
