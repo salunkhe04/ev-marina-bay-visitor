@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:marina_bay_cell_building_visitors/core/helper/helper.dart';
 import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
 import 'package:marina_bay_cell_building_visitors/pages/visitors/visitor_form_edit_screen.dart';
 import 'package:provider/provider.dart';
@@ -315,11 +316,14 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
                                     /// Date
                                     Text(
-                                      attendee.checkInTime != null
-                                          ? DateFormat(
-                                              "dd MMM yyyy",
-                                            ).format(attendee.checkInTime!)
-                                          : "No Date",
+                                      Helper.formatDateOnly(
+                                        attendee.checkInTime != null
+                                            ? attendee.checkInTime
+                                                      ?.toIso8601String() ??
+                                                  ""
+                                            : "NA",
+                                      ),
+
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
@@ -335,10 +339,12 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
                                     const SizedBox(height: 8),
 
-                                    infoTile(
-                                      "Unit No",
-                                      attendee.unitNo.toString(),
-                                    ),
+                                    if (attendee.unitNo != null) ...[
+                                      infoTile(
+                                        "Unit No",
+                                        attendee.unitNo.toString(),
+                                      ),
+                                    ],
 
                                     const SizedBox(height: 10),
 
@@ -376,11 +382,14 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                               Column(
                                 children: [
                                   Text(
-                                    attendee.checkInTime != null
-                                        ? DateFormat(
-                                            "hh:mm:ss a",
-                                          ).format(attendee.checkInTime!)
-                                        : "NA",
+                                    Helper.formatDateOnly(
+                                      attendee.checkOutTime != null
+                                          ? attendee.checkOutTime
+                                                    ?.toIso8601String() ??
+                                                ""
+                                          : "NA",
+                                    ),
+
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,

@@ -183,8 +183,10 @@ class ApiService {
         //Helper.showCustomSnackBar(response.data['message']);
         return null;
       }
+      final parsedData = MarinaBayVisitor.fromJson(response.data['data']);
+      print(parsedData);
       //Helper.showCustomSnackBar(response.data['message'], Colors.green);
-      return MarinaBayVisitor.fromJson(response.data['data']);
+      return parsedData;
     } on DioException catch (e) {
       String errorMessage = 'Something went wrong';
 
