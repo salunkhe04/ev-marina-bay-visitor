@@ -26,11 +26,6 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    final settingProvider = Provider.of<SettingProvider>(
-      context,
-      listen: false,
-    );
-    settingProvider.getAppUpdate(context);
 
     // Setup fade-in animation for a premium feel
     _animationController = AnimationController(

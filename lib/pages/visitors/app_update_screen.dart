@@ -108,7 +108,7 @@ class _AppUpdateSheetState extends State<AppUpdateSheet>
 
     final dio = Dio();
     final dir = await getApplicationDocumentsDirectory();
-    final savePath = "${dir.path}/mcq_exam_update.apk";
+    final savePath = "${dir.path}/marina_visitor.apk";
 
     try {
       final url = widget.update?.downloadUrl ?? '';

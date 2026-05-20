@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:marina_bay_cell_building_visitors/navigation_wrapper.dart';
+import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,6 +43,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    final settingProvider = Provider.of<SettingProvider>(
+      context,
+      listen: false,
+    );
+    _loadSavedCredentials();
+
+    settingProvider.getAppUpdate(context);
     _fadeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -64,29 +74,49 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   Future<void> _handleLogin() async {
     FocusScope.of(context).unfocus();
-    // if (!_formKey.currentState!.validate()) return;
-    
+
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
-    
-    // Simulating a network request delay
-    await Future.delayed(const Duration(seconds: 2));
-    
-    if (mounted) {
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    const staticEmail = "marina@gmail.com";
+    const staticPassword = "123456";
+
+    if (_emailCtrl.text.trim() == staticEmail &&
+        _passCtrl.text.trim() == staticPassword) {
+      await _saveCredentials();
+
+      if (!mounted) return;
+
       setState(() => _isLoading = false);
-      
-      // Optional: Show a success message
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Welcome, Visitor! 🌊'),
           backgroundColor: _primaryBlue,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const NavigationWrapper(),
+        MaterialPageRoute(builder: (context) => const NavigationWrapper()),
+      );
+    } else {
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Invalid email or password'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -103,6 +133,35 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     if (v == null || v.isEmpty) return 'Password is required';
     if (v.length < 6) return 'Password must be at least 6 characters';
     return null;
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('saved_email');
+    final savedPassed = prefs.getString('saved_passed');
+    final rememberMe = prefs.getBool('remember_me') ?? false;
+
+    if (savedEmail != null && rememberMe) {
+      setState(() {
+        _emailCtrl.text = savedEmail;
+        _passCtrl.text = savedPassed ?? "";
+        _rememberMe = rememberMe;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (_rememberMe) {
+      await prefs.setString('saved_email', _emailCtrl.text.trim());
+      await prefs.setString('saved_passed', _passCtrl.text.trim());
+      await prefs.setBool('remember_me', true);
+    } else {
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_passed');
+      await prefs.setBool('remember_me', false);
+    }
   }
 
   // ── Build ────────────────────────────────────────────────────────────────────
@@ -159,7 +218,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                             ),
                           ),
 
-                          
                           const SizedBox(height: 40),
 
                           // ── Card ───────────────────────────────────────
@@ -168,10 +226,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                             decoration: BoxDecoration(
                               color: _white,
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: _cardBorder,
-                                width: 1,
-                              ),
+                              border: Border.all(color: _cardBorder, width: 1),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.06),
@@ -228,10 +283,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 const SizedBox(height: 32),
 
                                 // ── Divider line ─────────────────────────
-                                Container(
-                                  height: 1,
-                                  color: _cardBorder,
-                                ),
+                                Container(height: 1, color: _cardBorder),
                                 const SizedBox(height: 28),
 
                                 // ── Email ─────────────────────────────────
@@ -244,9 +296,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                   prefixIcon: Icons.email_outlined,
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
-                                  onFieldSubmitted: (_) =>
-                                      FocusScope.of(context)
-                                          .requestFocus(_passFocus),
+                                  onFieldSubmitted: (_) => FocusScope.of(
+                                    context,
+                                  ).requestFocus(_passFocus),
                                   validator: _validateEmail,
                                 ),
                                 const SizedBox(height: 20),
@@ -271,8 +323,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                       color: _hintGrey,
                                       size: 20,
                                     ),
-                                    onPressed: () => setState(() =>
-                                        _obscurePassword = !_obscurePassword),
+                                    onPressed: () => setState(
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 18),
@@ -290,26 +344,30 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                           child: Checkbox(
                                             value: _rememberMe,
                                             onChanged: (v) => setState(
-                                                () => _rememberMe = v ?? false),
+                                              () => _rememberMe = v ?? false,
+                                            ),
                                             activeColor: _primaryBlue,
                                             checkColor: _white,
                                             side: const BorderSide(
-                                                color: _cardBorder, width: 1.5),
+                                              color: _cardBorder,
+                                              width: 1.5,
+                                            ),
                                             shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(4)),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
                                         const Text(
                                           'Remember me',
                                           style: TextStyle(
-                                              color: _subtitleGrey,
-                                              fontSize: 13),
+                                            color: _subtitleGrey,
+                                            fontSize: 13,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                   
                                   ],
                                 ),
                                 const SizedBox(height: 28),
@@ -372,11 +430,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
-          BoxShadow(
-            color: _shadowColor,
-            blurRadius: 32,
-            spreadRadius: -4,
-          ),
+          BoxShadow(color: _shadowColor, blurRadius: 32, spreadRadius: -4),
         ],
       ),
       child: ClipOval(
@@ -436,8 +490,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: _inputFill,
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: _cardBorder),
@@ -473,8 +529,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           backgroundColor: Colors.transparent,
           disabledBackgroundColor: Colors.transparent,
           padding: EdgeInsets.zero,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 0,
         ),
         child: Ink(
@@ -522,8 +579,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                         ),
                       ),
                       SizedBox(width: 10),
-                      Icon(Icons.arrow_forward_rounded,
-                          color: Colors.white, size: 18),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ],
                   ),
           ),
