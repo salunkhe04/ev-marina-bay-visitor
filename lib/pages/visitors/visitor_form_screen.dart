@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
+
+// Your EV Homes feature components and state engines
+// import 'package:ev_homes/core/providers/attendance_provider.dart';
+// import 'package:ev_homes/core/providers/geolocation_provider.dart';
+// import 'package:ev_homes/core/providers/setting_provider.dart';
+// import 'time_in_out_screen_face_recog_v2.dart';
 
 class VisitorFormScreen extends StatefulWidget {
   const VisitorFormScreen({super.key});
@@ -11,37 +17,25 @@ class VisitorFormScreen extends StatefulWidget {
 
 class _VisitorFormScreenState extends State<VisitorFormScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
-  final TextEditingController _purposeController = TextEditingController();
+  final TextEditingController _commentController = TextEditingController();
+  final TextEditingController _flatNoController = TextEditingController();
 
-  String? _attachedFileName;
   TimeOfDay? _selectedTimeIn;
-  TimeOfDay? _selectedTimeOut;
-
-  Future<void> _pickPhotoAllowance() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'png', 'jpeg'],
-    );
-    if (result != null) {
-      setState(() {
-        _attachedFileName = result.files.single.name;
-      });
-    }
-  }
+  String _selectedPurpose = 'Visitor';
 
   Future<void> _selectTime(BuildContext context, bool isTimeIn) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
+
     if (picked != null) {
       setState(() {
         if (isTimeIn) {
           _selectedTimeIn = picked;
-        } else {
-          _selectedTimeOut = picked;
         }
       });
     }
@@ -51,7 +45,12 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(title: const Text('Marina Bay Visitors')),
+      appBar: AppBar(
+        title: const Text('Marina Bay Visitors'),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F172A),
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(20.0),
@@ -74,7 +73,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
               ),
               const SizedBox(height: 20),
 
-              // IMPROVISED: Single unified container wrapper with an elegant light gradient
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -89,12 +87,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white,
-                      Color(
-                        0xFFF8FAFC,
-                      ), // Fades beautifully into a soft metallic sheen
-                    ],
+                    colors: [Colors.white, Color(0xFFF8FAFC)],
                   ),
                   border: Border.all(color: const Color(0xFFEDF2F7)),
                 ),
@@ -102,7 +95,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Field 1: Name
+                    // Full Name
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(
@@ -112,9 +105,10 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                       validator: (value) =>
                           value!.isEmpty ? 'Name required' : null,
                     ),
+
                     const SizedBox(height: 18),
 
-                    // Field 2: Contact
+                    // Contact
                     TextFormField(
                       controller: _contactController,
                       decoration: const InputDecoration(
@@ -126,11 +120,12 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                       validator: (value) =>
                           value!.isEmpty ? 'Contact info required' : null,
                     ),
+
                     const SizedBox(height: 18),
 
-                    // Field 3: Photo Document Component Link
+                    // Purpose Dropdown
                     const Text(
-                      'Verification Documents',
+                      'Purpose',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -138,60 +133,215 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    InkWell(
-                      onTap: _pickPhotoAllowance,
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.add_a_photo_outlined,
-                              color: Color(0xFF2563EB),
-                              size: 22,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedPurpose,
+                          isExpanded: true,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Visitor',
+                              child: Text('Visitor'),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Photo Allowance Attachment',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    _attachedFileName ??
-                                        'Tap to select system image source',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: _attachedFileName != null
-                                          ? Colors.green.shade700
-                                          : const Color(0xFF94A3B8),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
+                            DropdownMenuItem(
+                              value: 'Owner',
+                              child: Text('Owner'),
                             ),
                           ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedPurpose = value!;
+                            });
+                          },
                         ),
                       ),
                     ),
+
+                    // Flat No field only for Owner
+                    if (_selectedPurpose == 'Owner') ...[
+                      const SizedBox(height: 18),
+                      TextFormField(
+                        controller: _flatNoController,
+                        decoration: const InputDecoration(
+                          labelText: 'Flat No.',
+                          prefixIcon: Icon(Icons.apartment_rounded, size: 22),
+                        ),
+                        validator: (value) {
+                          if (_selectedPurpose == 'Owner' &&
+                              (value == null || value.isEmpty)) {
+                            return 'Flat number required';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // NEW: Dynamic Biometric Face Verification Field
+                    const Text(
+                      'Security Verification',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Consumer2<AttendanceProvider, GeolocationProvider>(
+                    //   builder: (context, attendanceProvider, geolocationProvider, child) {
+                    //     final bool isCheckedIn =
+                    //         attendanceProvider.attendance?.checkInTime != null;
+                    //     final bool isCheckedOut =
+                    //         attendanceProvider.attendance?.checkOutTime != null;
+
+                    //     String cardTitle = "Biometric Verification";
+                    //     String actionButtonText = "Punch IN";
+                    //     Color statusColor = const Color(
+                    //       0xFF2563EB,
+                    //     ); // Premium Blue
+                    //     IconData statusIcon = Icons.fingerprint_rounded;
+
+                    //     if (isCheckedIn && !isCheckedOut) {
+                    //       cardTitle = "Active Session: Clocked In";
+                    //       actionButtonText = "Punch OUT";
+                    //       statusColor = const Color(
+                    //         0xFF10B981,
+                    //       ); // Emerald Green
+                    //       statusIcon = Icons.gpp_good_rounded;
+                    //     } else if (isCheckedOut) {
+                    //       cardTitle = "Verification Completed";
+                    //       actionButtonText = "Completed";
+                    //       statusColor = const Color(0xFF64748B); // Slate Gray
+                    //       statusIcon = Icons.lock_clock_rounded;
+                    //     }
+
+                    //     return Container(
+                    //       width: double.infinity,
+                    //       padding: const EdgeInsets.all(14),
+                    //       decoration: BoxDecoration(
+                    //         color: Colors.white,
+                    //         borderRadius: BorderRadius.circular(16),
+                    //         border: Border.all(color: const Color(0xFFE2E8F0)),
+                    //         backgroundColor: const Color(0xFFF8FAFC),
+                    //       ),
+                    //       child: Column(
+                    //         crossAxisAlignment: CrossAxisAlignment.start,
+                    //         children: [
+                    //           Row(
+                    //             children: [
+                    //               Container(
+                    //                 padding: const EdgeInsets.all(8),
+                    //                 decoration: BoxDecoration(
+                    //                   color: statusColor.withOpacity(0.1),
+                    //                   shape: BoxShape.circle,
+                    //                 ),
+                    //                 child: Icon(
+                    //                   statusIcon,
+                    //                   color: statusColor,
+                    //                   size: 20,
+                    //                 ),
+                    //               ),
+                    //               const SizedBox(width: 12),
+                    //               Expanded(
+                    //                 child: Column(
+                    //                   crossAxisAlignment:
+                    //                       CrossAxisAlignment.start,
+                    //                   children: [
+                    //                     Text(
+                    //                       cardTitle,
+                    //                       style: const TextStyle(
+                    //                         fontSize: 14,
+                    //                         fontWeight: FontWeight.bold,
+                    //                         color: Color(0xFF1E293B),
+                    //                       ),
+                    //                     ),
+                    //                     const SizedBox(height: 1),
+                    //                     Text(
+                    //                       geolocationProvider.isWithinRadius
+                    //                           ? "Inside verified parameter boundaries"
+                    //                           : "Checking operational parameters...",
+                    //                       style: TextStyle(
+                    //                         fontSize: 11,
+                    //                         color:
+                    //                             geolocationProvider
+                    //                                 .isWithinRadius
+                    //                             ? const Color(0xFF64748B)
+                    //                             : const Color(0xFF64748B),
+                    //                       ),
+                    //                     ),
+                    //                   ],
+                    //                 ),
+                    //               ),
+                    //             ],
+                    //           ),
+                    //           const SizedBox(height: 12),
+                    //           SizedBox(
+                    //             width: double.infinity,
+                    //             height: 44,
+                    //             child: ElevatedButton(
+                    //               onPressed: isCheckedOut
+                    //                   ? null
+                    //                   : () {
+                    //                       final String type = isCheckedIn
+                    //                           ? "OUT"
+                    //                           : "IN";
+                    //                       // final settingProvider =
+                    //                       //     Provider.of<SettingProvider>(
+                    //                       //       context,
+                    //                       //       listen: false,
+                    //                       //     );
+
+                    //                       Navigator.of(context).push(
+                    //                         MaterialPageRoute(
+                    //                           builder: (context) =>
+                    //                               TimeInOutScreenFaceRecog(
+                    //                                 type: type,
+                    //                                 id: settingProvider
+                    //                                     .loggedAdmin
+                    //                                     ?.id,
+                    //                               ),
+                    //                         ),
+                    //                       );
+                    //                     },
+                    //               style: ElevatedButton.styleFrom(
+                    //                 backgroundColor: isCheckedIn
+                    //                     ? const Color(0xFFEF4444)
+                    //                     : const Color(0xFF2563EB),
+                    //                 foregroundColor: Colors.white,
+                    //                 elevation: 0,
+                    //                 disabledBackgroundColor: const Color(
+                    //                   0xFFE2E8F0,
+                    //                 ),
+                    //                 shape: RoundedRectangleBorder(
+                    //                   borderRadius: BorderRadius.circular(10),
+                    //                 ),
+                    //               ),
+                    //               child: Text(
+                    //                 actionButtonText,
+                    //                 style: const TextStyle(
+                    //                   fontSize: 13,
+                    //                   fontWeight: FontWeight.bold,
+                    //                 ),
+                    //               ),
+                    //             ),
+                    //           ),
+                    //         ],
+                    //       ),
+                    //     );
+                    //   },
+                    // ),
                     const SizedBox(height: 18),
 
-                    // Field 4 & 5: Unified Time Range
+                    // Schedule Timings
                     const Text(
                       'Schedule Timings',
                       style: TextStyle(
@@ -210,35 +360,28 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                             onTap: () => _selectTime(context, true),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildTimePickerField(
-                            title: 'Time Out',
-                            time: _selectedTimeOut,
-                            onTap: () => _selectTime(context, false),
-                          ),
-                        ),
                       ],
                     ),
+
                     const SizedBox(height: 18),
 
-                    // Field 6: Purpose Paragraph Area
+                    // Comment
                     TextFormField(
-                      controller: _purposeController,
+                      controller: _commentController,
                       decoration: const InputDecoration(
-                        labelText: 'Purpose of Visit',
+                        labelText: 'Comment',
                         alignLabelWithHint: true,
                       ),
                       maxLines: 4,
                       validator: (value) =>
-                          value!.isEmpty ? 'Purpose statement required' : null,
+                          value!.isEmpty ? 'Comment required' : null,
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 32),
 
-              // Action Submit Layout Row
               Center(
                 child: ElevatedButton(
                   onPressed: () {
