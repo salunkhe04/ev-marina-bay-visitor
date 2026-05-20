@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:marina_bay_cell_building_visitors/core/helper/helper.dart';
 import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
 import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart';
 import 'package:marina_bay_cell_building_visitors/services/api_service.dart';
@@ -249,7 +250,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         unitNo: int.tryParse(_flatNoController.text),
         date: DateTime.now(),
         type: _selectedType,
-        purpose: _commentController.text,
+        purpose: Helper.getTextOrNull(_commentController),
       );
 
       final newMap = dta.toJson();
@@ -261,7 +262,23 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         const SnackBar(content: Text("Visitor added successfully")),
       );
 
-      Navigator.of(context).pop();
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      // Clear fields
+      setState(() {
+        _nameController.clear();
+        _contactController.clear();
+        _commentController.clear();
+        _flatNoController.clear();
+
+        capturedImageFile = null;
+        capturedImageUrl = null;
+
+        _selectedTimeIn = null;
+
+        _selectedType = "Visitor";
+      });
     } catch (e) {
     } finally {
       setState(() {
@@ -423,7 +440,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
                     // NEW: Dynamic Biometric Face Verification Field
                     const Text(
-                      'Check-In',
+                      'Check in photo',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -473,7 +490,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
                     // Schedule Timings
                     const Text(
-                      'Schedule Timings',
+                      'Time In',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -499,7 +516,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                     TextFormField(
                       controller: _commentController,
                       decoration: const InputDecoration(
-                        labelText: 'Comment',
+                        labelText: 'Purpose',
                         alignLabelWithHint: true,
                       ),
                       maxLines: 4,

@@ -169,6 +169,41 @@ class ApiService {
       return null;
     }
   }
+
+  Future<MarinaBayVisitor?> updateVisitor(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final Response response = await _dio.post(
+        '/marina-bay-check-out/$id',
+        data: data,
+      );
+      if (response.data['code'] != 200) {
+        //Helper.showCustomSnackBar(response.data['message']);
+        return null;
+      }
+      //Helper.showCustomSnackBar(response.data['message'], Colors.green);
+      return MarinaBayVisitor.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      String errorMessage = 'Something went wrong';
+
+      if (e.response != null) {
+        // Backend response error message
+        errorMessage = e.response?.data['message'] ?? errorMessage;
+      } else {
+        // Other types of errors (network, etc.)
+        errorMessage = e.message?.toString() ?? errorMessage;
+      }
+      // Prevent literal 'null' from showing
+      if (errorMessage.trim().toLowerCase() == 'null') {
+        errorMessage = 'Something went wrong';
+      }
+      //Helper.showCustomSnackBar(errorMessage);
+
+      return null;
+    }
+  }
 }
 
 class _AuthInterceptor extends Interceptor {
