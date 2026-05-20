@@ -1,8 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     
     <application
-        android:label="Marina bay visitors form"
+        android:label="Marina Bay visitors form"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

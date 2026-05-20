@@ -51,9 +51,9 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
 
   String _selectedType = 'Visitor';
 
-  bool _photoError = false;
+  bool _checkOutPhotoError = false;
 
-  bool _timeInError = false;
+  bool _timeOutError = false;
 
   File? checkOutImageFile;
 
@@ -87,11 +87,8 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
 
     if (picked != null) {
       setState(() {
-        // if (isTimeIn) {
-        //   _selectedTimeIn = picked;
-        // } else {
         _selectedTimeOut = picked;
-        // }
+        _timeOutError = false;
       });
     }
   }
@@ -181,6 +178,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
 
                           setState(() {
                             checkOutImageFile = File(file.path);
+                            _checkOutPhotoError = false;
                           });
 
                           if (mounted) {
@@ -237,6 +235,26 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
   }
 
   Future<void> onUpdate() async {
+    if (checkOutImageFile == null && checkOutImageUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Checkout photo is required"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedTimeOut == null && widget.visitor?.checkOutTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Time out is required"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final settingProvider = Provider.of<SettingProvider>(
       context,
       listen: false,
@@ -302,7 +320,13 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
       );
 
       if (!mounted) return;
+      setState(() {
+        _checkOutPhotoError =
+            checkOutImageFile == null && checkOutImageUrl == null;
 
+        _timeOutError =
+            _selectedTimeOut == null && widget.visitor?.checkOutTime == null;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Visitor checked out successfully")),
       );
@@ -462,7 +486,12 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                         height: 140,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(
+                            color: _checkOutPhotoError
+                                ? Colors.red
+                                : Colors.grey.shade300,
+                            width: _checkOutPhotoError ? 2 : 1,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                           color: Colors.grey.shade100,
                         ),
@@ -525,7 +554,12 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(
+                            color: _timeOutError
+                                ? Colors.red
+                                : const Color(0xFFE2E8F0),
+                            width: _timeOutError ? 2 : 1,
+                          ),
                         ),
                         child: Row(
                           children: [

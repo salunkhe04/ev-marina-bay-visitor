@@ -10,6 +10,7 @@ import 'package:marina_bay_cell_building_visitors/navigation_wrapper.dart';
 import 'package:marina_bay_cell_building_visitors/pages/visitors/login_page.dart';
 import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -26,11 +27,6 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    final settingProvider = Provider.of<SettingProvider>(
-      context,
-      listen: false,
-    );
-    settingProvider.getAppUpdate(context);
 
     // Setup fade-in animation for a premium feel
     _animationController = AnimationController(
@@ -44,13 +40,27 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animationController.forward();
 
-    Timer(const Duration(seconds: 4), () {
-      if (mounted) {
-        Navigator.of(
-          context,
-        ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPage()));
-      }
-    });
+    _checkLogin();
+  }
+
+  Future<void> _checkLogin() async {
+    await Future.delayed(const Duration(seconds: 4));
+
+    final prefs = await SharedPreferences.getInstance();
+
+    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+
+    if (!mounted) return;
+
+    if (isLoggedIn) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const NavigationWrapper()),
+      );
+    } else {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPage()));
+    }
   }
 
   @override

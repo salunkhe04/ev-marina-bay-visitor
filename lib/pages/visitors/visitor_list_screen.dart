@@ -44,7 +44,6 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
       await settingProvider.getMarinaBayVisitor();
     } catch (e) {
-      debugPrint(e.toString());
     } finally {
       setState(() {
         isLoading = false;
