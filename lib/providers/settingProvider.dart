@@ -27,4 +27,11 @@ class SettingProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
     return dataResp;
   }
+
+  Future<void> updateVisitor(String id, Map<String, dynamic> data) async {
+    final resp = await _apiService.updateVisitor(id, data);
+    if (resp == null) return;
+    // await getMarinaBayVisitor();
+    notifyListeners();
+  }
 }
