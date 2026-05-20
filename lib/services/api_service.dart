@@ -58,7 +58,7 @@ class ApiService {
       });
 
       final Response response = await _dio1.post(
-        '/upload',
+        '/upload/path=marinaVisitorApp',
         data: formData,
         options: Options(
           // sendTimeout: Duration(minutes: 5),
@@ -66,6 +66,8 @@ class ApiService {
         ),
         onSendProgress: onSendProgress,
       );
+
+      print(response);
       if (response.statusCode != 200) {
         // Handle non-200 status codes
         //Helper.showCustomSnackBar(response.data["message"]);
@@ -107,8 +109,11 @@ class ApiService {
         Helper.showCustomSnackBar(response.data['message']);
         return null;
       }
+
+      final parsedData = MarinaBayVisitor.fromJson(response.data['data']);
+      print(parsedData);
       // Helper.showCustomSnackBar(response.data['message'], Colors.green);
-      return MarinaBayVisitor.fromJson(response.data['data']);
+      return parsedData;
     } on DioException catch (e) {
       String errorMessage = 'Something went wrong';
 
