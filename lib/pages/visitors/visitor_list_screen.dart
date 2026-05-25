@@ -133,28 +133,27 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => _selectDate(context),
-                    child: const Icon(
-                      Icons.calendar_today,
-                      color: Colors.grey,
-                      size: 28,
-                    ),
-                  ),
+                  // GestureDetector(
+                  //   onTap: () => _selectDate(context),
+                  //   child: const Icon(
+                  //     Icons.calendar_today,
+                  //     color: Colors.grey,
+                  //     size: 28,
+                  //   ),
+                  // ),
 
-                  const SizedBox(width: 12),
+                  // const SizedBox(width: 12),
 
-                  GestureDetector(
-                    onTap: () => _selectDate(context),
-                    child: Text(
-                      DateFormat("MMMM yyyy").format(selectedDate),
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-
+                  // GestureDetector(
+                  //   onTap: () => _selectDate(context),
+                  //   child: Text(
+                  //     DateFormat("MMMM yyyy").format(selectedDate),
+                  //     style: const TextStyle(
+                  //       fontSize: 17,
+                  //       fontWeight: FontWeight.w500,
+                  //     ),
+                  //   ),
+                  // ),
                   const Spacer(),
 
                   GestureDetector(
@@ -327,6 +326,12 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
                                       ),
+                                    ),
+                                    const SizedBox(height: 10),
+
+                                    infoTile(
+                                      "No of People",
+                                      attendee.peopleCount.toString(),
                                     ),
 
                                     const SizedBox(height: 10),

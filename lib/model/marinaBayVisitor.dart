@@ -10,6 +10,7 @@ class MarinaBayVisitor {
   final int? unitNo;
   final DateTime? date;
   final String? type;
+  final int? peopleCount;
 
   MarinaBayVisitor({
     this.id,
@@ -23,6 +24,7 @@ class MarinaBayVisitor {
     this.unitNo,
     this.date,
     this.type,
+    this.peopleCount,
   });
 
   Map<String, dynamic> toJson() {
@@ -38,6 +40,7 @@ class MarinaBayVisitor {
       "unitNo": unitNo,
       "date": date?.toIso8601String(),
       "type": type,
+      "peopleCount": peopleCount,
     };
   }
 
@@ -58,6 +61,7 @@ class MarinaBayVisitor {
       unitNo: json['unitNo'],
       date: json['date'] != null ? DateTime.parse(json['date']) : null,
       type: json['type'],
+      peopleCount: json['peopleCount'],
     );
   }
 }
