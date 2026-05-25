@@ -46,6 +46,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   String _selectedType = 'Visitor';
   bool _photoError = false;
   bool _timeInError = false;
+  int _numberOfPeople = 1;
 
   Future<void> _selectTime(BuildContext context, bool isTimeIn) async {
     final TimeOfDay? picked = await showTimePicker(
@@ -251,6 +252,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         date: DateTime.now(),
         type: _selectedType,
         purpose: Helper.getTextOrNull(_commentController),
+        peopleCount: _numberOfPeople,
       );
 
       final newMap = dta.toJson();
@@ -372,6 +374,61 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                           value!.isEmpty ? 'Contact info required' : null,
                     ),
 
+                    const SizedBox(height: 18),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Number of People',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+
+                          Row(
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  if (_numberOfPeople > 1) {
+                                    setState(() {
+                                      _numberOfPeople--;
+                                    });
+                                  }
+                                },
+                                icon: const Icon(Icons.remove_circle_outline),
+                              ),
+
+                              Text(
+                                '$_numberOfPeople',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _numberOfPeople++;
+                                  });
+                                },
+                                icon: const Icon(Icons.add_circle_outline),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 18),
 
                     // Purpose Dropdown

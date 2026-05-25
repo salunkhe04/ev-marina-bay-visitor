@@ -60,6 +60,8 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
   String? checkOutImageUrl;
 
   TimeOfDay? _selectedTimeOut;
+  int _numberOfPeople = 1;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +72,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
     _flatNoController.text = visitor?.unitNo?.toString() ?? '';
     _selectedType = visitor?.type ?? 'Visitor';
     capturedImageUrl = visitor?.checkInPhoto;
+    _numberOfPeople = int.parse(visitor?.peopleCount.toString() ?? "");
     if (visitor?.checkInTime != null) {
       _selectedTimeIn = TimeOfDay.fromDateTime(visitor!.checkInTime!);
     }
@@ -312,6 +315,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
         checkInTime: widget.visitor?.checkInTime,
         checkOutPhoto: checkOutImageUrl,
         checkOutTime: checkoutDateTime,
+        peopleCount: widget?.visitor?.peopleCount,
       );
 
       await settingProvider.updateVisitor(
@@ -414,6 +418,60 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
 
                     const SizedBox(height: 18),
 
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Number of People',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+
+                          Row(
+                            children: [
+                              // IconButton(
+                              //   onPressed: () {
+                              //     // if (_numberOfPeople > 1) {
+                              //     setState(() {
+                              //       _numberOfPeople;
+                              //     });
+                              //     // }
+                              //   },
+                              //   icon: const Icon(Icons.remove_circle_outline),
+                              // ),
+                              Text(
+                                '$_numberOfPeople',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              // IconButton(
+                              //   onPressed: () {
+                              //     setState(() {
+                              //       _numberOfPeople++;
+                              //     });
+                              //   },
+                              //   icon: const Icon(Icons.add_circle_outline),
+                              // ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
                     const Text(
                       'Authority',
                       style: TextStyle(

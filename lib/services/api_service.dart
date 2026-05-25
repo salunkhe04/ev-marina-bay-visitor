@@ -10,9 +10,9 @@ import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
 import 'package:marina_bay_cell_building_visitors/model/upload_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-const baseUrl = "https://api.evhomes.tech";
+// const baseUrl = "https://api.evhomes.tech";
 
-// const baseUrl = "http://192.168.1.14:8082";
+const baseUrl = "http://192.168.1.14:8082";
 
 const storageUrl = "https://api2.evhomes.tech";
 
