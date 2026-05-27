@@ -30,6 +30,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
   final TextEditingController _commentController = TextEditingController();
 
   final TextEditingController _flatNoController = TextEditingController();
+  final TextEditingController _wingController = TextEditingController();
 
   File? capturedImageFile;
 
@@ -70,6 +71,8 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
     _contactController.text = visitor?.phoneNumber?.toString() ?? '';
     _commentController.text = visitor?.purpose ?? '';
     _flatNoController.text = visitor?.unitNo?.toString() ?? '';
+    _wingController.text = visitor?.wing ?? "";
+
     _selectedType = visitor?.type ?? 'Visitor';
     capturedImageUrl = visitor?.checkInPhoto;
     _numberOfPeople = int.parse(visitor?.peopleCount.toString() ?? "");
@@ -316,6 +319,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
         checkOutPhoto: checkOutImageUrl,
         checkOutTime: checkoutDateTime,
         peopleCount: widget?.visitor?.peopleCount,
+        wing: widget?.visitor?.wing,
       );
 
       await settingProvider.updateVisitor(
@@ -520,6 +524,14 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           labelText: 'Flat No.',
+                          prefixIcon: Icon(Icons.apartment_rounded),
+                        ),
+                      ),
+
+                      TextFormField(
+                        controller: _wingController,
+                        decoration: const InputDecoration(
+                          labelText: 'Wing.',
                           prefixIcon: Icon(Icons.apartment_rounded),
                         ),
                       ),
