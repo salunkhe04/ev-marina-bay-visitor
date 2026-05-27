@@ -27,6 +27,21 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    final settingProvider = Provider.of<SettingProvider>(
+      context,
+      listen: false,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final settingProvider = Provider.of<SettingProvider>(
+        context,
+        listen: false,
+      );
+
+      await settingProvider.getAppUpdate(context);
+
+      _checkLogin();
+    });
+    // settingProvider.getAppUpdate(context);
 
     // Setup fade-in animation for a premium feel
     _animationController = AnimationController(
@@ -39,8 +54,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animationController.forward();
-
-    _checkLogin();
   }
 
   Future<void> _checkLogin() async {

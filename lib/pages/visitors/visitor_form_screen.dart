@@ -31,6 +31,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   final TextEditingController _contactController = TextEditingController();
   final TextEditingController _commentController = TextEditingController();
   final TextEditingController _flatNoController = TextEditingController();
+  final TextEditingController _wingController = TextEditingController();
 
   File? capturedImageFile;
   String? capturedImageUrl;
@@ -253,6 +254,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         type: _selectedType,
         purpose: Helper.getTextOrNull(_commentController),
         peopleCount: _numberOfPeople,
+        wing: _wingController.text,
       );
 
       final newMap = dta.toJson();
@@ -490,6 +492,22 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                           }
                           return null;
                         },
+                      ),
+                      const SizedBox(height: 18),
+                      TextFormField(
+                        controller: _wingController,
+                        // keyboardType: TextInputType.name
+                        decoration: const InputDecoration(
+                          labelText: 'Wing.',
+                          prefixIcon: Icon(Icons.apartment_rounded, size: 22),
+                        ),
+                        // validator: (value) {
+                        //   if (_selectedType == 'Owner' &&
+                        //       (value == null || value.isEmpty)) {
+                        //     return 'Flat number required';
+                        //   }
+                        //   return null;
+                        // },
                       ),
                     ],
 

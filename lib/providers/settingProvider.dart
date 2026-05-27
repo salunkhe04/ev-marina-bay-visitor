@@ -55,8 +55,10 @@ class SettingProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (parsedVer < (resp.versionNumber ?? 0)) {
       //
       print("sfa");
-      showModalBottomSheet(
+      await showModalBottomSheet(
         context: context,
+        isDismissible: false,
+        enableDrag: false,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (_) => AppUpdateSheet(update: resp),
