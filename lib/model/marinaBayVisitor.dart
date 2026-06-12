@@ -12,6 +12,7 @@ class MarinaBayVisitor {
   final String? type;
   final int? peopleCount;
   final String? wing;
+  final String? project;
 
   MarinaBayVisitor({
     this.id,
@@ -27,6 +28,7 @@ class MarinaBayVisitor {
     this.type,
     this.peopleCount,
     this.wing,
+    this.project,
   });
 
   Map<String, dynamic> toJson() {
@@ -44,6 +46,7 @@ class MarinaBayVisitor {
       "type": type,
       "peopleCount": peopleCount,
       "wing": wing,
+      "project": project,
     };
   }
 
@@ -66,6 +69,7 @@ class MarinaBayVisitor {
       type: json['type'],
       peopleCount: json['peopleCount'],
       wing: json['wing'],
+      project: json['project'],
     );
   }
 }
