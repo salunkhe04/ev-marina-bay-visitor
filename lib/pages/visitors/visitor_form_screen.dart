@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,13 +8,7 @@ import 'package:marina_bay_cell_building_visitors/providers/settingProvider.dart
 import 'package:marina_bay_cell_building_visitors/services/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image/image.dart' as img; // Import the image package
-
-// Your EV Homes feature components and state engines
-// import 'package:ev_homes/core/providers/attendance_provider.dart';
-// import 'package:ev_homes/core/providers/geolocation_provider.dart';
-// import 'package:ev_homes/core/providers/setting_provider.dart';
-// import 'time_in_out_screen_face_recog_v2.dart';
+import 'package:image/image.dart' as img;
 
 class VisitorFormScreen extends StatefulWidget {
   const VisitorFormScreen({super.key});
@@ -49,6 +42,12 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   bool _timeInError = false;
   int _numberOfPeople = 1;
 
+  String? _selectedProject;
+  String? _selectedWing;
+
+  final List<String> _projectsList = ['Marina Bay', 'Shraddha',];
+  final List<String> _shraddhaWingsList = ['Wing A1', 'Wing A2',];
+
   Future<void> _selectTime(BuildContext context, bool isTimeIn) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -77,7 +76,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
           body: SafeArea(
             child: Stack(
               children: [
-                // Camera Preview
                 Center(
                   child: Container(
                     margin: const EdgeInsets.all(20),
@@ -105,8 +103,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                     ),
                   ),
                 ),
-
-                // Top Bar
                 Positioned(
                   top: 16,
                   left: 16,
@@ -124,7 +120,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                           size: 30,
                         ),
                       ),
-
                       const Text(
                         "Capture Visitor Photo",
                         style: TextStyle(
@@ -133,13 +128,10 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
                       const SizedBox(width: 48),
                     ],
                   ),
                 ),
-
-                // Bottom Capture Button
                 Positioned(
                   bottom: 40,
                   left: 0,
@@ -152,7 +144,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
                           setState(() {
                             capturedImageFile = File(file.path);
-                            // photoError = null;
                           });
 
                           if (mounted) {
@@ -237,12 +228,9 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
           );
           await compressedFile.writeAsBytes(compressedImageBytes);
           final uploadedFile = await ApiService().uploadFile(compressedFile);
-          // print(uploadedFile);
           capturedImageUrl = uploadedFile?.downloadUrl;
         }
       }
-
-      print(capturedImageUrl);
 
       final dta = MarinaBayVisitor(
         name: _nameController.text,
@@ -254,7 +242,9 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         type: _selectedType,
         purpose: Helper.getTextOrNull(_commentController),
         peopleCount: _numberOfPeople,
-        wing: _wingController.text,
+        // Fallback to textfield entry if not project "Shraddha"
+        wing: _selectedProject == 'Shraddha' ? _selectedWing : _wingController.text,
+        project: _selectedProject,
       );
 
       final newMap = dta.toJson();
@@ -269,21 +259,25 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
-      // Clear fields
+      
       setState(() {
         _nameController.clear();
         _contactController.clear();
         _commentController.clear();
         _flatNoController.clear();
+        _wingController.clear();
 
         capturedImageFile = null;
         capturedImageUrl = null;
-
         _selectedTimeIn = null;
-
         _selectedType = "Visitor";
+        
+        // Reset dynamic fields
+        _selectedProject = null;
+        _selectedWing = null;
       });
     } catch (e) {
+      // Handle error gracefully
     } finally {
       setState(() {
         isLoading = false;
@@ -345,6 +339,91 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // NEW: Dynamic Project Selection Dropdown
+                    const Text(
+                      'Select Project',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _selectedProject,
+                      hint: const Text('Choose Project Location'),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.business_rounded, size: 22),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                      ),
+                      items: _projectsList.map((String project) {
+                        return DropdownMenuItem<String>(
+                          value: project,
+                          child: Text(project),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedProject = value;
+                          _selectedWing = null; // Clear wing selection when project changes
+                        });
+                      },
+                      validator: (value) => value == null ? 'Project selection is required' : null,
+                    ),
+
+                    // NEW: Conditional Wing Dropdown if Project is 'Shraddha'
+                    if (_selectedProject == 'Shraddha') ...[
+                      const SizedBox(height: 18),
+                      const Text(
+                        'Select Wing',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _selectedWing,
+                        hint: const Text('Choose Wing'),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.holiday_village_outlined, size: 22),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        items: _shraddhaWingsList.map((String wing) {
+                          return DropdownMenuItem<String>(
+                            value: wing,
+                            child: Text(wing),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedWing = value;
+                          });
+                        },
+                        validator: (value) =>
+                            _selectedProject == 'Shraddha' && value == null ? 'Wing selection is required' : null,
+                      ),
+                    ],
+
+                    const SizedBox(height: 18),
+
                     // Full Name
                     TextFormField(
                       controller: _nameController,
@@ -396,7 +475,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-
                           Row(
                             children: [
                               IconButton(
@@ -409,7 +487,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                                 },
                                 icon: const Icon(Icons.remove_circle_outline),
                               ),
-
                               Text(
                                 '$_numberOfPeople',
                                 style: const TextStyle(
@@ -417,7 +494,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-
                               IconButton(
                                 onPressed: () {
                                   setState(() {
@@ -493,27 +569,23 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 18),
-                      TextFormField(
-                        controller: _wingController,
-                        // keyboardType: TextInputType.name
-                        decoration: const InputDecoration(
-                          labelText: 'Wing.',
-                          prefixIcon: Icon(Icons.apartment_rounded, size: 22),
+                      
+                      // Show standard Wing textfield ONLY if the project isn't 'Shraddha' 
+                      if (_selectedProject != 'Shraddha') ...[
+                        const SizedBox(height: 18),
+                        TextFormField(
+                          controller: _wingController,
+                          decoration: const InputDecoration(
+                            labelText: 'Wing.',
+                            prefixIcon: Icon(Icons.apartment_rounded, size: 22),
+                          ),
                         ),
-                        // validator: (value) {
-                        //   if (_selectedType == 'Owner' &&
-                        //       (value == null || value.isEmpty)) {
-                        //     return 'Flat number required';
-                        //   }
-                        //   return null;
-                        // },
-                      ),
+                      ],
                     ],
 
                     const SizedBox(height: 24),
 
-                    // NEW: Dynamic Biometric Face Verification Field
+                    // Check-in Photo Layout
                     const Text(
                       'Check in photo',
                       style: TextStyle(
@@ -605,7 +677,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
               Center(
                 child: ElevatedButton(
                   onPressed: isLoading ? null : onSubmit,
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,

@@ -29,6 +29,9 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
   String searchQuery = '';
   bool isLoading = false;
 
+  String selectedProjectFilter = 'All';
+  final List<String> projectFilters = ['All', 'Marina Bay', 'Shraddha'];
+
   DateTime selectedDate = DateTime.now();
 
   Future<void> onRefresh() async {
@@ -44,6 +47,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
       await settingProvider.getMarinaBayVisitor();
     } catch (e) {
+      // Handle exception cleanly
     } finally {
       setState(() {
         isLoading = false;
@@ -54,8 +58,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
   Future<void> _selectDate(BuildContext context) async {
     final picked = await SimpleMonthYearPicker.showMonthYearPickerDialog(
       context: context,
-      selectionColor: const Color(0xFF1565C0), // BLUE
-      // buttonsColor: const Color(0xFF1565C0),
+      selectionColor: const Color(0xFF1565C0),
       titleTextStyle: const TextStyle(
         color: Color(0xFF1565C0),
         fontWeight: FontWeight.w600,
@@ -93,13 +96,24 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
   Widget build(BuildContext context) {
     final settingProvider = Provider.of<SettingProvider>(context);
 
+    // UPDATED: Filter sequence parsing text queries and project selections concurrently
     final List<MarinaBayVisitor> filteredAttendance = settingProvider.visitors
         .where((visitor) {
           final name = visitor.name?.toLowerCase() ?? '';
           final purpose = visitor.purpose?.toLowerCase() ?? '';
           final search = searchQuery.toLowerCase();
 
-          return name.contains(search) || purpose.contains(search);
+          // Match the text search first
+          final matchesSearch =
+              name.contains(search) || purpose.contains(search);
+
+          // Match the dynamic project filter pill selection next
+          final matchesProject =
+              selectedProjectFilter == 'All' ||
+              (visitor.project?.toLowerCase() ==
+                  selectedProjectFilter.toLowerCase());
+
+          return matchesSearch && matchesProject;
         })
         .toList();
 
@@ -119,58 +133,22 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
             fontSize: 20,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1565C0)),
+            onPressed: () {
+              onRefresh(); // Example
+            },
+          ),
+        ],
       ),
 
       body: RefreshIndicator(
         onRefresh: onRefresh,
-
         child: Column(
           children: [
             const SizedBox(height: 18),
 
-            /// Date Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  // GestureDetector(
-                  //   onTap: () => _selectDate(context),
-                  //   child: const Icon(
-                  //     Icons.calendar_today,
-                  //     color: Colors.grey,
-                  //     size: 28,
-                  //   ),
-                  // ),
-
-                  // const SizedBox(width: 12),
-
-                  // GestureDetector(
-                  //   onTap: () => _selectDate(context),
-                  //   child: Text(
-                  //     DateFormat("MMMM yyyy").format(selectedDate),
-                  //     style: const TextStyle(
-                  //       fontSize: 17,
-                  //       fontWeight: FontWeight.w500,
-                  //     ),
-                  //   ),
-                  // ),
-                  const Spacer(),
-
-                  GestureDetector(
-                    onTap: onRefresh,
-                    child: const Icon(
-                      Icons.refresh,
-                      color: Colors.grey,
-                      size: 32,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            /// Search
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: SizedBox(
@@ -204,12 +182,65 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
               ),
             ),
 
+            const SizedBox(height: 12),
+
+            SizedBox(
+              height: 38,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: projectFilters.map((projectItem) {
+                      final bool isSelected =
+                          selectedProjectFilter == projectItem;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(projectItem),
+                          selected: isSelected,
+                          selectedColor: const Color(0xFF1565C0),
+                          backgroundColor: Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF475569),
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? Colors.transparent
+                                  : const Color(0xFFE2E8F0),
+                            ),
+                          ),
+                          elevation: isSelected ? 2 : 0,
+                          pressElevation: 3,
+                          onSelected: (bool selected) {
+                            if (selected) {
+                              setState(() {
+                                selectedProjectFilter = projectItem;
+                              });
+                            }
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+
             const SizedBox(height: 10),
 
-            /// Loading
             if (isLoading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
-            /// Empty State
             else if (filteredAttendance.isEmpty)
               Expanded(
                 child: Center(
@@ -228,23 +259,21 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                           color: Colors.blueGrey.shade300,
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       const Text(
-                        'No Active Visitors',
+                        'No Matching Visitors',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-
                       const SizedBox(height: 4),
-
-                      const Text(
-                        'New check-ins will display here',
-                        style: TextStyle(
+                      Text(
+                        selectedProjectFilter == 'All'
+                            ? 'New check-ins will display here'
+                            : 'No entries registered for $selectedProjectFilter',
+                        style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF64748B),
                         ),
@@ -253,7 +282,6 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                   ),
                 ),
               )
-            /// List
             else
               Expanded(
                 child: ListView.builder(
@@ -295,24 +323,42 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              /// LEFT
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    /// Visitor Name
-                                    Text(
-                                      attendee.name ?? "Unknown Visitor",
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF1565C0),
-                                      ),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            attendee.name ?? "Unknown Visitor",
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF1565C0),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
 
                                     const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            "Project: ${attendee.project ?? 'N/A'}",
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF1565C0),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
 
-                                    /// Date
                                     Text(
                                       Helper.formatDate(
                                         attendee.checkInTime != null
@@ -321,12 +367,12 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                                                   ""
                                             : "NA",
                                       ),
-
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
+
                                     const SizedBox(height: 10),
 
                                     infoTile(
@@ -345,8 +391,8 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
                                     if (attendee.unitNo != null) ...[
                                       infoTile(
-                                        "Unit No",
-                                        attendee.unitNo.toString(),
+                                        "Unit / Wing",
+                                        "${attendee.unitNo}${attendee.wing != null ? ' - ${attendee.wing}' : ''}",
                                       ),
                                     ],
 
@@ -382,7 +428,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
                               const SizedBox(width: 10),
 
-                              /// CHECK IN
+                              /// CHECK IN IMAGE TARGET
                               Column(
                                 children: [
                                   Text(
@@ -393,22 +439,19 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                                                 ""
                                           : "NA",
                                     ),
-
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-
                                   const SizedBox(height: 8),
-
                                   photoWidget(attendee.checkInPhoto ?? ""),
                                 ],
                               ),
 
                               const SizedBox(width: 10),
 
-                              /// CHECK OUT
+                              /// CHECK OUT IMAGE TARGET
                               Column(
                                 children: [
                                   Text(
@@ -419,15 +462,12 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                                                 ""
                                           : "NA",
                                     ),
-
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-
                                   const SizedBox(height: 8),
-
                                   photoWidget(attendee.checkOutPhoto ?? ""),
                                 ],
                               ),
@@ -457,9 +497,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
             color: Colors.grey.shade700,
           ),
         ),
-
         const SizedBox(height: 2),
-
         Text(
           value,
           style: TextStyle(
