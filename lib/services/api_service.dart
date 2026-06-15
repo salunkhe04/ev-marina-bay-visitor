@@ -12,7 +12,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 const baseUrl = "https://api.evhomes.tech";
 
-// const baseUrl = "http://192.168.1.14:8082";
+// const baseUrl = "http://192.168.1.49:8082";
 
 const storageUrl = "https://api2.evhomes.tech";
 
