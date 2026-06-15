@@ -45,8 +45,8 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   String? _selectedProject;
   String? _selectedWing;
 
-  final List<String> _projectsList = ['Marina Bay', 'Shraddha',];
-  final List<String> _shraddhaWingsList = ['Wing A1', 'Wing A2',];
+  final List<String> _projectsList = ['Marina Bay', 'Shraddha'];
+  final List<String> _shraddhaWingsList = ['Wing A1', 'Wing A2'];
 
   Future<void> _selectTime(BuildContext context, bool isTimeIn) async {
     final TimeOfDay? picked = await showTimePicker(
@@ -242,8 +242,9 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         type: _selectedType,
         purpose: Helper.getTextOrNull(_commentController),
         peopleCount: _numberOfPeople,
-        // Fallback to textfield entry if not project "Shraddha"
-        wing: _selectedProject == 'Shraddha' ? _selectedWing : _wingController.text,
+        wing: _selectedProject == 'Shraddha'
+            ? _selectedWing
+            : Helper.getTextOrNull(_wingController),
         project: _selectedProject,
       );
 
@@ -259,7 +260,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
-      
+
       setState(() {
         _nameController.clear();
         _contactController.clear();
@@ -271,7 +272,7 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         capturedImageUrl = null;
         _selectedTimeIn = null;
         _selectedType = "Visitor";
-        
+
         // Reset dynamic fields
         _selectedProject = null;
         _selectedWing = null;
@@ -351,17 +352,27 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       value: _selectedProject,
-                      hint: const Text('Choose Project Location'),
+                      hint: const Text('Choose Project'),
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.business_rounded, size: 22),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        prefixIcon: const Icon(
+                          Icons.business_rounded,
+                          size: 22,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
                         ),
                       ),
                       items: _projectsList.map((String project) {
@@ -373,10 +384,13 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                       onChanged: (value) {
                         setState(() {
                           _selectedProject = value;
-                          _selectedWing = null; // Clear wing selection when project changes
+                          _selectedWing =
+                              null; // Clear wing selection when project changes
                         });
                       },
-                      validator: (value) => value == null ? 'Project selection is required' : null,
+                      validator: (value) => value == null
+                          ? 'Project selection is required'
+                          : null,
                     ),
 
                     // NEW: Conditional Wing Dropdown if Project is 'Shraddha'
@@ -395,15 +409,25 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                         value: _selectedWing,
                         hint: const Text('Choose Wing'),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.holiday_village_outlined, size: 22),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          prefixIcon: const Icon(
+                            Icons.holiday_village_outlined,
+                            size: 22,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                         ),
                         items: _shraddhaWingsList.map((String wing) {
@@ -418,10 +442,86 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                           });
                         },
                         validator: (value) =>
-                            _selectedProject == 'Shraddha' && value == null ? 'Wing selection is required' : null,
+                            _selectedProject == 'Shraddha' && value == null
+                            ? 'Wing selection is required'
+                            : null,
                       ),
                     ],
 
+                    const SizedBox(height: 18),
+                    // Purpose Dropdown
+                    const Text(
+                      'Authority',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedType,
+                          isExpanded: true,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Visitor',
+                              child: Text('Visitor'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Owner',
+                              child: Text('Owner'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedType = value!;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // Flat No field only for Owner
+                    if (_selectedType == 'Owner') ...[
+                      const SizedBox(height: 18),
+                      TextFormField(
+                        controller: _flatNoController,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        decoration: const InputDecoration(
+                          labelText: 'Flat No.',
+                          prefixIcon: Icon(Icons.apartment_rounded, size: 22),
+                        ),
+                        validator: (value) {
+                          if (_selectedType == 'Owner' &&
+                              (value == null || value.isEmpty)) {
+                            return 'Flat number required';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Show standard Wing textfield ONLY if the project isn't 'Shraddha'
+                      if (_selectedProject != 'Shraddha') ...[
+                        const SizedBox(height: 18),
+                        TextFormField(
+                          controller: _wingController,
+                          decoration: const InputDecoration(
+                            labelText: 'Wing.',
+                            prefixIcon: Icon(Icons.apartment_rounded, size: 22),
+                          ),
+                        ),
+                      ],
+                    ],
                     const SizedBox(height: 18),
 
                     // Full Name
@@ -508,82 +608,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
-
-                    // Purpose Dropdown
-                    const Text(
-                      'Authority',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedType,
-                          isExpanded: true,
-                          icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'Visitor',
-                              child: Text('Visitor'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Owner',
-                              child: Text('Owner'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedType = value!;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-
-                    // Flat No field only for Owner
-                    if (_selectedType == 'Owner') ...[
-                      const SizedBox(height: 18),
-                      TextFormField(
-                        controller: _flatNoController,
-                        keyboardType: TextInputType.number,
-                        maxLength: 6,
-                        decoration: const InputDecoration(
-                          labelText: 'Flat No.',
-                          prefixIcon: Icon(Icons.apartment_rounded, size: 22),
-                        ),
-                        validator: (value) {
-                          if (_selectedType == 'Owner' &&
-                              (value == null || value.isEmpty)) {
-                            return 'Flat number required';
-                          }
-                          return null;
-                        },
-                      ),
-                      
-                      // Show standard Wing textfield ONLY if the project isn't 'Shraddha' 
-                      if (_selectedProject != 'Shraddha') ...[
-                        const SizedBox(height: 18),
-                        TextFormField(
-                          controller: _wingController,
-                          decoration: const InputDecoration(
-                            labelText: 'Wing.',
-                            prefixIcon: Icon(Icons.apartment_rounded, size: 22),
-                          ),
-                        ),
-                      ],
-                    ],
-
-                    const SizedBox(height: 24),
 
                     // Check-in Photo Layout
                     const Text(

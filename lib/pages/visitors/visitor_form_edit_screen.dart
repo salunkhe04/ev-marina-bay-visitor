@@ -24,6 +24,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _project = TextEditingController();
 
   final TextEditingController _contactController = TextEditingController();
 
@@ -72,6 +73,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
     _commentController.text = visitor?.purpose ?? '';
     _flatNoController.text = visitor?.unitNo?.toString() ?? '';
     _wingController.text = visitor?.wing ?? "";
+    _project.text = visitor?.project ?? "";
 
     _selectedType = visitor?.type ?? 'Visitor';
     capturedImageUrl = visitor?.checkInPhoto;
@@ -320,6 +322,8 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
         checkOutTime: checkoutDateTime,
         peopleCount: widget?.visitor?.peopleCount,
         wing: widget?.visitor?.wing,
+        unitNo: widget?.visitor?.unitNo,
+        project: widget?.visitor?.project,
       );
 
       await settingProvider.updateVisitor(
@@ -390,11 +394,11 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextFormField(
-                      controller: _nameController,
+                      controller: _project,
                       readOnly: true,
                       enabled: false,
                       decoration: const InputDecoration(
-                        labelText: 'Full Name',
+                        labelText: 'Project',
                         prefixIcon: Icon(Icons.badge_outlined),
                       ),
                       validator: (value) {
