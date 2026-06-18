@@ -38,15 +38,9 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
   bool isLoading = false;
   TimeOfDay? _selectedTimeIn;
   String _selectedType = 'Visitor';
-  bool _photoError = false;
-  bool _timeInError = false;
   int _numberOfPeople = 1;
 
   String? _selectedProject;
-  String? _selectedWing;
-
-  final List<String> _projectsList = ['Marina Bay', 'Shraddha'];
-  final List<String> _shraddhaWingsList = ['Wing A1', 'Wing A2'];
 
   Future<void> _selectTime(BuildContext context, bool isTimeIn) async {
     final TimeOfDay? picked = await showTimePicker(
@@ -242,10 +236,8 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
         type: _selectedType,
         purpose: Helper.getTextOrNull(_commentController),
         peopleCount: _numberOfPeople,
-        wing: _selectedProject == 'Shraddha'
-            ? _selectedWing
-            : Helper.getTextOrNull(_wingController),
-        project: _selectedProject,
+        wing: Helper.getTextOrNull(_wingController),
+        project: "Marina Bay",
       );
 
       final newMap = dta.toJson();
@@ -275,7 +267,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
         // Reset dynamic fields
         _selectedProject = null;
-        _selectedWing = null;
       });
     } catch (e) {
       // Handle error gracefully
@@ -340,115 +331,6 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // NEW: Dynamic Project Selection Dropdown
-                    const Text(
-                      'Select Project',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _selectedProject,
-                      hint: const Text('Choose Project'),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.business_rounded,
-                          size: 22,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
-                          ),
-                        ),
-                      ),
-                      items: _projectsList.map((String project) {
-                        return DropdownMenuItem<String>(
-                          value: project,
-                          child: Text(project),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedProject = value;
-                          _selectedWing =
-                              null; // Clear wing selection when project changes
-                        });
-                      },
-                      validator: (value) => value == null
-                          ? 'Project selection is required'
-                          : null,
-                    ),
-
-                    // NEW: Conditional Wing Dropdown if Project is 'Shraddha'
-                    if (_selectedProject == 'Shraddha') ...[
-                      const SizedBox(height: 18),
-                      const Text(
-                        'Select Wing',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF475569),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        value: _selectedWing,
-                        hint: const Text('Choose Wing'),
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(
-                            Icons.holiday_village_outlined,
-                            size: 22,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE2E8F0),
-                            ),
-                          ),
-                        ),
-                        items: _shraddhaWingsList.map((String wing) {
-                          return DropdownMenuItem<String>(
-                            value: wing,
-                            child: Text(wing),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedWing = value;
-                          });
-                        },
-                        validator: (value) =>
-                            _selectedProject == 'Shraddha' && value == null
-                            ? 'Wing selection is required'
-                            : null,
-                      ),
-                    ],
-
-                    const SizedBox(height: 18),
                     // Purpose Dropdown
                     const Text(
                       'Authority',

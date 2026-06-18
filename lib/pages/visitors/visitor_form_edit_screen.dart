@@ -530,14 +530,7 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                           labelText: 'Flat No.',
                           prefixIcon: Icon(Icons.apartment_rounded),
                         ),
-                      ),
-
-                      TextFormField(
-                        controller: _wingController,
-                        decoration: const InputDecoration(
-                          labelText: 'Wing.',
-                          prefixIcon: Icon(Icons.apartment_rounded),
-                        ),
+                        readOnly: true,
                       ),
                     ],
 
