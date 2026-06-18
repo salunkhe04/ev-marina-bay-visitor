@@ -29,9 +29,6 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
   String searchQuery = '';
   bool isLoading = false;
 
-  String selectedProjectFilter = 'All';
-  final List<String> projectFilters = ['All', 'Marina Bay', 'Shraddha'];
-
   DateTime selectedDate = DateTime.now();
 
   Future<void> onRefresh() async {
@@ -45,7 +42,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
         isLoading = true;
       });
 
-      await settingProvider.getMarinaBayVisitor();
+      await settingProvider.getMarinaBayVisitor("Marina Bay");
     } catch (e) {
       // Handle exception cleanly
     } finally {
@@ -107,13 +104,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
           final matchesSearch =
               name.contains(search) || purpose.contains(search);
 
-          // Match the dynamic project filter pill selection next
-          final matchesProject =
-              selectedProjectFilter == 'All' ||
-              (visitor.project?.toLowerCase() ==
-                  selectedProjectFilter.toLowerCase());
-
-          return matchesSearch && matchesProject;
+          return matchesSearch;
         })
         .toList();
 
@@ -184,61 +175,6 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
             const SizedBox(height: 12),
 
-            SizedBox(
-              height: 38,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: projectFilters.map((projectItem) {
-                      final bool isSelected =
-                          selectedProjectFilter == projectItem;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(projectItem),
-                          selected: isSelected,
-                          selectedColor: const Color(0xFF1565C0),
-                          backgroundColor: Colors.white,
-                          labelStyle: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : const Color(0xFF475569),
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(
-                              color: isSelected
-                                  ? Colors.transparent
-                                  : const Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          elevation: isSelected ? 2 : 0,
-                          pressElevation: 3,
-                          onSelected: (bool selected) {
-                            if (selected) {
-                              setState(() {
-                                selectedProjectFilter = projectItem;
-                              });
-                            }
-                          },
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
             if (isLoading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (filteredAttendance.isEmpty)
@@ -269,15 +205,6 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        selectedProjectFilter == 'All'
-                            ? 'New check-ins will display here'
-                            : 'No entries registered for $selectedProjectFilter',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
                     ],
                   ),
                 ),

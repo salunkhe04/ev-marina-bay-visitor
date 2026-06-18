@@ -99,9 +99,11 @@ class ApiService {
     }
   }
 
-  Future<List<MarinaBayVisitor>> getMarinaBayVisitor() async {
+  Future<List<MarinaBayVisitor>> getMarinaBayVisitor(String? project) async {
     try {
-      final Response response = await _dio.get('/marina-bay-visitors');
+      final Response response = await _dio.get(
+        '/marina-bay-visitors?project=$project',
+      );
       if (response.data['code'] != 200) {
         //Helper.showCustomSnackBar(response.data['message']);
         return [];
