@@ -268,6 +268,8 @@ class _AuthInterceptor extends Interceptor {
     //       error: "No internet connection",
     //       message: "No internet connection"));
     // }
+    options.headers['x-platform'] = 'web';
+    options.queryParameters['force'] = 1;
     if (kIsWeb) {
       options.headers['x-platform'] = 'web';
     }
