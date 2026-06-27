@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:marina_bay_cell_building_visitors/core/helper/helper.dart';
@@ -26,87 +28,93 @@ class VisitorListScreenMobile extends StatefulWidget {
 }
 
 class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+
+  Timer? _debounce;
   String searchQuery = '';
   bool isLoading = false;
-
   DateTime selectedDate = DateTime.now();
+  int page = 1;
+  List<MarinaBayVisitor> visitor = [];
+  bool hasMore = true;
 
-  Future<void> onRefresh() async {
-    try {
-      final settingProvider = Provider.of<SettingProvider>(
-        context,
-        listen: false,
-      );
+  Future<void> fetchSessions({String query = ''}) async {
+    if (isLoading) return;
+    setState(() => isLoading = true);
 
-      setState(() {
-        isLoading = true;
-      });
-
-      await settingProvider.getMarinaBayVisitor("Marina Bay");
-    } catch (e) {
-      // Handle exception cleanly
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final picked = await SimpleMonthYearPicker.showMonthYearPickerDialog(
-      context: context,
-      selectionColor: const Color(0xFF1565C0),
-      titleTextStyle: const TextStyle(
-        color: Color(0xFF1565C0),
-        fontWeight: FontWeight.w600,
-        fontSize: 18,
-      ),
-      monthTextStyle: const TextStyle(
-        color: Colors.black87,
-        fontWeight: FontWeight.w500,
-      ),
-      yearTextStyle: const TextStyle(
-        color: Colors.black87,
-        fontWeight: FontWeight.w500,
-      ),
-      backgroundColor: Colors.white,
-      disableFuture: true,
+    final provider = Provider.of<SettingProvider>(context, listen: false);
+    final response = await provider.getMarinaBayVisitor(
+      "Marina Bay",
+      query,
+      page,
+      10,
     );
 
-    if (picked != null) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      visitor.addAll(response.data);
+      isLoading = false;
+      page++;
+      if (response.data.length < 10) {
+        hasMore = false;
+      }
+    });
+  }
+
+  // Resets pagination state and fetches page 1 with the given query.
+  // Used by both search-debounce and pull-to-refresh.
+  void _resetAndSearch(String query) {
+    setState(() {
+      searchQuery = query;
+      page = 1;
+      visitor.clear();
+      hasMore = true;
+    });
+    fetchSessions(query: query);
+  }
+
+  Future<void> onRefresh() async {
+    _resetAndSearch(searchQuery);
   }
 
   @override
   void initState() {
     super.initState();
+    fetchSessions();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      onRefresh();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+              _scrollController.position.maxScrollExtent - 300 &&
+          !isLoading &&
+          hasMore) {
+        fetchSessions(query: searchQuery);
+      }
     });
+
+    _searchController.addListener(() {
+      final query = _searchController.text.trim();
+      if (query == searchQuery) return;
+
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 500), () {
+        _resetAndSearch(query);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final settingProvider = Provider.of<SettingProvider>(context);
-
-    // UPDATED: Filter sequence parsing text queries and project selections concurrently
-    final List<MarinaBayVisitor> filteredAttendance = settingProvider.visitors
-        .where((visitor) {
-          final name = visitor.name?.toLowerCase() ?? '';
-          final purpose = visitor.purpose?.toLowerCase() ?? '';
-          final search = searchQuery.toLowerCase();
-
-          // Match the text search first
-          final matchesSearch =
-              name.contains(search) || purpose.contains(search);
-
-          return matchesSearch;
-        })
-        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F5F7),
@@ -128,7 +136,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1565C0)),
             onPressed: () {
-              onRefresh(); // Example
+              onRefresh();
             },
           ),
         ],
@@ -145,11 +153,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
               child: SizedBox(
                 height: 48,
                 child: TextField(
-                  onChanged: (query) {
-                    setState(() {
-                      searchQuery = query;
-                    });
-                  },
+                  controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Search Visitor',
                     hintStyle: TextStyle(
@@ -175,9 +179,9 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
             const SizedBox(height: 12),
 
-            if (isLoading)
+            if (isLoading && visitor.isEmpty)
               const Expanded(child: Center(child: CircularProgressIndicator()))
-            else if (filteredAttendance.isEmpty)
+            else if (visitor.isEmpty)
               Expanded(
                 child: Center(
                   child: Column(
@@ -212,10 +216,18 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
             else
               Expanded(
                 child: ListView.builder(
+                  controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: filteredAttendance.length,
+                  itemCount: visitor.length + (hasMore ? 1 : 0),
                   itemBuilder: (context, index) {
-                    final MarinaBayVisitor attendee = filteredAttendance[index];
+                    if (index >= visitor.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+
+                    final MarinaBayVisitor attendee = visitor[index];
 
                     return GestureDetector(
                       onTap: () async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:marina_bay_cell_building_visitors/model/app_update.dart';
 import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
+import 'package:marina_bay_cell_building_visitors/model/pagination.dart';
 import 'package:marina_bay_cell_building_visitors/pages/visitors/app_update_screen.dart';
 import 'package:marina_bay_cell_building_visitors/services/api_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -15,11 +16,44 @@ class SettingProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   List<MarinaBayVisitor> get visitors => _visitor;
 
-  Future<void> getMarinaBayVisitor(String? project) async {
-    final desgs = await _apiService.getMarinaBayVisitor(project);
-    _visitor = desgs;
+  int _currentPage = 1;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  bool get hasMore => _hasMore;
+  bool get isLoadingMore => _isLoadingMore;
+  int get currentPage => _currentPage;
+  PaginationModel<MarinaBayVisitor> _visit = PaginationModel<MarinaBayVisitor>(
+    code: 404,
+    message: '',
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+    totalItems: 0,
+    data: [],
+  );
+
+  Future<PaginationModel<MarinaBayVisitor>> getMarinaBayVisitor(
+    String? project, [
+    String query = '',
+    int page = 1,
+    int limit = 10,
+  ]) async {
+    final leads = await _apiService.getMarinaBayVisitor(
+      project,
+      query,
+      page,
+      limit,
+    );
+    _visit = leads;
     notifyListeners();
+    return leads;
   }
+
+  // Future<void> getMarinaBayVisitor(String? project) async {
+  //   final desgs = await _apiService.getMarinaBayVisitor(project);
+  //   _visitor = desgs;
+  //   notifyListeners();
+  // }
 
   Future<MarinaBayVisitor?> addMarinaVisitor(Map<String, dynamic> data) async {
     final dataResp = await _apiService.addMarinaBayVisitor(data);
