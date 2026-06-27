@@ -7,12 +7,13 @@ import 'package:flutter/foundation.dart';
 import 'package:marina_bay_cell_building_visitors/core/helper/helper.dart';
 import 'package:marina_bay_cell_building_visitors/model/app_update.dart';
 import 'package:marina_bay_cell_building_visitors/model/marinaBayVisitor.dart';
+import 'package:marina_bay_cell_building_visitors/model/pagination.dart';
 import 'package:marina_bay_cell_building_visitors/model/upload_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-const baseUrl = "https://api.evhomes.tech";
+const baseUrl = "https://security.evhomes.tech";
 
-// const baseUrl = "http://192.168.1.49:8082";
+// const baseUrl = "http://192.168.1.201:8087";
 
 const storageUrl = "https://api2.evhomes.tech";
 
@@ -99,24 +100,59 @@ class ApiService {
     }
   }
 
-  Future<List<MarinaBayVisitor>> getMarinaBayVisitor(String? project) async {
+  Future<PaginationModel<MarinaBayVisitor>> getMarinaBayVisitor(
+    String? project, [
+    String query = '',
+    int page = 1,
+    int limit = 20,
+  ]) async {
     try {
-      final Response response = await _dio.get(
-        '/marina-bay-visitors?project=$project',
-      );
-      if (response.data['code'] != 200) {
-        //Helper.showCustomSnackBar(response.data['message']);
-        return [];
+      var url = '/visitors?project=$project';
+
+      if (page != null) {
+        url += "&page=$page";
       }
-      print(response);
 
-      final rData = response.data?['data'] as List? ?? [];
-      // print("design p 2");
-      final parseList = rData
-          .map((ele) => MarinaBayVisitor.fromJson(ele))
-          .toList();
+      if (limit != null) {
+        url += "&limit=$limit";
+      }
+      if (query != null) {
+        url += "&query=$query";
+      }
+      print(url);
+      final Response response = await _dio.get(url);
 
-      return parseList;
+      final Map<String, dynamic> data = response.data;
+      if (response.data["code"] != 200) {
+        final emptyPagination = PaginationModel<MarinaBayVisitor>(
+          code: 404,
+          message: '',
+          page: page,
+          limit: limit,
+          totalPages: 1,
+          totalItems: 0,
+          data: [],
+        );
+
+        return emptyPagination;
+      }
+      final items = data['data'] as List<dynamic>? ?? [];
+
+      List<MarinaBayVisitor> session = [];
+      if (items.isNotEmpty) {
+        session = items.map((emp) => MarinaBayVisitor.fromJson(emp)).toList();
+      }
+      final newPagination = PaginationModel<MarinaBayVisitor>(
+        code: data['code'],
+        message: data['message'],
+        page: data['page'],
+        limit: data['limit'],
+        totalPages: data['totalPages'],
+        totalItems: data['totalItems'],
+        data: session,
+      );
+
+      return newPagination;
     } on DioException catch (e) {
       String errorMessage = 'Something went wrong';
 
@@ -131,8 +167,17 @@ class ApiService {
       if (errorMessage.trim().toLowerCase() == 'null') {
         errorMessage = 'Something went wrong';
       }
-      //Helper.showCustomSnackBar(errorMessage);
-      return [];
+      final emptyPagination = PaginationModel<MarinaBayVisitor>(
+        code: 404,
+        message: '',
+        page: page,
+        limit: limit,
+        totalPages: 1,
+        totalItems: 0,
+        total: 0,
+        data: [],
+      );
+      return emptyPagination;
     }
   }
 
@@ -141,10 +186,7 @@ class ApiService {
   ) async {
     try {
       print("1");
-      final Response response = await _dio.post(
-        '/add-marina-bay-visitors',
-        data: data,
-      );
+      final Response response = await _dio.post('/add-visitor', data: data);
 
       print(response.data);
       if (response.data['code'] != 200) {
@@ -182,7 +224,7 @@ class ApiService {
   ) async {
     try {
       final Response response = await _dio.post(
-        '/marina-bay-check-out/$id',
+        '/visitor-check-out/$id',
         data: data,
       );
       if (response.data['code'] != 200) {
@@ -268,7 +310,7 @@ class _AuthInterceptor extends Interceptor {
     //       error: "No internet connection",
     //       message: "No internet connection"));
     // }
-    options.headers['x-platform'] = 'web';
+    // options.headers['x-platform'] = 'web';
     options.queryParameters['force'] = 1;
     if (kIsWeb) {
       options.headers['x-platform'] = 'web';
@@ -386,6 +428,8 @@ class _ResponseInterceptor extends Interceptor {
 }
 
 String handleDioError(DioException e) {
+  debugPrint("ERROR DATA: ${e.response?.data}");
+  debugPrint("ERROR TYPE: ${e.response?.data.runtimeType}");
   final serverMessage = e.response?.data?['message'];
   if (serverMessage != null &&
       serverMessage is String &&
