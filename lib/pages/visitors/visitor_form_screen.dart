@@ -42,6 +42,37 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
   String? _selectedProject;
 
+  final floor = [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+  ];
+
+  final flatNo = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+  String? _selectedFloor;
+  String? _selectedFlatNo;
+
   Future<void> _selectTime(BuildContext context, bool isTimeIn) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -267,6 +298,8 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
 
         // Reset dynamic fields
         _selectedProject = null;
+        _selectedFlatNo = null;
+        _selectedFloor = null;
       });
     } catch (e) {
       // Handle error gracefully
@@ -371,39 +404,107 @@ class _VisitorFormScreenState extends State<VisitorFormScreen> {
                         ),
                       ),
                     ),
-
-                    // Flat No field only for Owner
-                    if (_selectedType == 'Owner') ...[
-                      const SizedBox(height: 18),
-                      TextFormField(
-                        controller: _flatNoController,
-                        keyboardType: TextInputType.number,
-                        maxLength: 6,
-                        decoration: const InputDecoration(
-                          labelText: 'Flat No.',
-                          prefixIcon: Icon(Icons.apartment_rounded, size: 22),
+                    const SizedBox(height: 18),
+                    DropdownButtonFormField<String>(
+                      value: _selectedFloor,
+                      isExpanded: true,
+                      isDense: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Floor',
+                        prefixIcon: Icon(Icons.layers_outlined, size: 22),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
                         ),
-                        validator: (value) {
-                          if (_selectedType == 'Owner' &&
-                              (value == null || value.isEmpty)) {
-                            return 'Flat number required';
-                          }
-                          return null;
-                        },
                       ),
+                      hint: const Text('Select Floor'),
+                      icon: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 20,
+                      ),
+                      items: floor.map((value) {
+                        return DropdownMenuItem<String>(
+                          value: value.toString(),
+                          child: Text(value.toString()),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedFloor = value;
 
-                      // Show standard Wing textfield ONLY if the project isn't 'Shraddha'
-                      if (_selectedProject != 'Shraddha') ...[
-                        const SizedBox(height: 18),
-                        TextFormField(
-                          controller: _wingController,
-                          decoration: const InputDecoration(
-                            labelText: 'Wing.',
-                            prefixIcon: Icon(Icons.apartment_rounded, size: 22),
-                          ),
+                          if (_selectedFloor != null &&
+                              _selectedFlatNo != null) {
+                            _flatNoController.text =
+                                '$_selectedFloor${_selectedFlatNo!.padLeft(2, '0')}';
+                          }
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Floor is required';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                    DropdownButtonFormField<String>(
+                      value: _selectedFlatNo,
+                      isExpanded: true,
+                      isDense: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Flat No',
+                        prefixIcon: Icon(Icons.numbers, size: 22),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
                         ),
-                      ],
-                    ],
+                      ),
+                      hint: const Text('Select Flat No.'),
+                      icon: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 20,
+                      ),
+                      items: flatNo.map((flat) {
+                        return DropdownMenuItem<String>(
+                          value: flat.toString(),
+                          child: Text(flat.toString().padLeft(2, '0')),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedFlatNo = value;
+
+                          if (_selectedFloor != null &&
+                              _selectedFlatNo != null) {
+                            _flatNoController.text =
+                                '$_selectedFloor${_selectedFlatNo!.padLeft(2, '0')}';
+                          }
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Flat number required';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                    TextFormField(
+                      controller: _flatNoController,
+                      keyboardType: TextInputType.number,
+                      readOnly: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Flat No.',
+                        prefixIcon: Icon(Icons.apartment_rounded, size: 22),
+                      ),
+                      validator: (value) {
+                        if ((value == null || value.isEmpty)) {
+                          return 'Flat number required';
+                        }
+                        return null;
+                      },
+                    ),
+
                     const SizedBox(height: 18),
 
                     // Full Name

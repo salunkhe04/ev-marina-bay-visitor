@@ -330,7 +330,7 @@ class _VisitorListScreenMobileState extends State<VisitorListScreenMobile> {
 
                                     if (attendee.unitNo != null) ...[
                                       infoTile(
-                                        "Unit / Wing",
+                                        "Flat No ",
                                         "${attendee.unitNo}${attendee.wing != null ? ' - ${attendee.wing}' : ''}",
                                       ),
                                     ],

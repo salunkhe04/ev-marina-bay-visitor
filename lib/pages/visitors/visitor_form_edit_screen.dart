@@ -520,19 +520,17 @@ class _VisitorFormEditScreenState extends State<VisitorFormEditScreen> {
                       ),
                     ),
 
-                    if (_selectedType == 'Owner') ...[
-                      const SizedBox(height: 18),
+                    const SizedBox(height: 18),
 
-                      TextFormField(
-                        controller: _flatNoController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Flat No.',
-                          prefixIcon: Icon(Icons.apartment_rounded),
-                        ),
-                        readOnly: true,
+                    TextFormField(
+                      controller: _flatNoController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Flat No.',
+                        prefixIcon: Icon(Icons.apartment_rounded),
                       ),
-                    ],
+                      readOnly: true,
+                    ),
 
                     const SizedBox(height: 24),
 
